@@ -1,0 +1,14 @@
+{
+	"extends": "@henko-software/tsconfig/node",
+	"compilerOptions": {
+		// Entre paquetes del repo se resuelve el código fuente (condición
+		// `henko-source` del campo exports), así el typecheck y los tests no
+		// necesitan build previo. Lo publicado usa `dist`.
+		"customConditions": ["henko-source"],
+		"lib": ["ES2023"],
+		"types": ["node"],
+		// Nest usa decoradores con metadata de tipos.
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true
+	}
+}
