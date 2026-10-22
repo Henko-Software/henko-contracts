@@ -8,6 +8,7 @@ depende sólo de los contratos que usa.
 | ------------------------------------ | -------------------------------------------------------------------------------------- |
 | `@henko-software/contracts-identity` | API interna de `identity` (sesiones, usuarios, dispositivos), roles, errores y eventos |
 | `@henko-software/contracts-bff`      | API pública de `henko-bff`, la que usa `henko-web`                                     |
+| `@henko-software/contracts-console`  | feedback que llega de cada instancia, API de la bandeja y trazas de la Henko Console   |
 
 ## Reglas
 

@@ -1,6 +1,10 @@
 import { z } from 'zod'
 
 import {
+	ingestFeedbackResponseSchema,
+	submitFeedbackSchema
+} from '@henko-software/contracts-console'
+import {
 	createUserRequestSchema,
 	deviceSchema,
 	registerDeviceRequestSchema,
@@ -55,6 +59,14 @@ export const registerDeviceResultSchema = z.object({
 	device: deviceSchema,
 	secret: z.string()
 })
+
+/**
+ * POST /api/feedback (con sesión) — el botón de feedback. El BFF suma quién
+ * reporta y lo reenvía a la Henko Console. 202 si llegó; si la Console no
+ * responde, 503 y el front lo guarda para reintentar con el mismo `id`.
+ */
+export const submitFeedbackBodySchema = submitFeedbackSchema
+export const submitFeedbackResultSchema = ingestFeedbackResponseSchema
 
 /** Forma de todo error. */
 export const errorBodySchema = z.object({
