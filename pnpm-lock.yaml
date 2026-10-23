@@ -12,8 +12,8 @@ importers:
         specifier: ^19.8.1
         version: 19.8.1(@types/node@22.20.5)(typescript@5.9.3)
       '@henko-software/agent-rules':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@henko-software/commitlint-config':
         specifier: ^0.1.0
         version: 0.1.0
@@ -351,8 +351,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@henko-software/agent-rules@0.1.0':
-    resolution: {integrity: sha512-k+jwfcT8lEAmgJu4ypS+LC1A2a07iROpEZ/wsgf9uWwHi0gn/CtdfMJUTWrE9A5C4byg5r/oni8BLpQW9+p6pA==, tarball: https://npm.pkg.github.com/download/@henko-software/agent-rules/0.1.0/23de632c82894ee27ec9800dc1af8798d7554c1d}
+  '@henko-software/agent-rules@0.3.0':
+    resolution: {integrity: sha512-sBJ+Bkz2sDFUY1S7mOUioOFeWtYx/mITRw/EW9XGi8hpe37SO8ubOVOSNOYJp/HWdYWhHURVeOlD38rbP6v1jw==, tarball: https://npm.pkg.github.com/download/@henko-software/agent-rules/0.3.0/4bbc10035dd26719a30dac9aeca2a99e1dd0d40f}
 
   '@henko-software/commitlint-config@0.1.0':
     resolution: {integrity: sha512-+jXf3pYmBPrIQyjcM/z8Nh0N9Q0KN9UjRM2g+n28HTEtiwhwxEXYi/9nxiRCqJqzqTuy8544XwfeetNGqrh9+A==, tarball: https://npm.pkg.github.com/download/@henko-software/commitlint-config/0.1.0/6e701c6f2473c8ec8e65cd7e4ed4596c65342d92}
@@ -2396,7 +2396,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@henko-software/agent-rules@0.1.0': {}
+  '@henko-software/agent-rules@0.3.0': {}
 
   '@henko-software/commitlint-config@0.1.0':
     dependencies:
