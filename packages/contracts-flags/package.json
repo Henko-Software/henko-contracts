@@ -1,0 +1,33 @@
+{
+	"name": "@henko-software/contracts-flags",
+	"version": "0.1.0",
+	"description": "Catálogo de feature flags de Henko (copia la nav) y los schemas de sus valores y del panel.",
+	"license": "UNLICENSED",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Henko-Software/henko-contracts.git",
+		"directory": "packages/contracts-flags"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"henko-source": "./src/index.ts",
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"zod": "^4.1.0"
+	}
+}
