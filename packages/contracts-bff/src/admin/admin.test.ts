@@ -47,4 +47,31 @@ describe('contrato de Administración del BFF', () => {
 			setStatusBodySchema.safeParse({ ids: [], status: 'deleted' }).success
 		).toBe(false)
 	})
+
+	it('padrón: CUIT de 11 dígitos y provincia que puede no venir', async () => {
+		const { cuitDigitsParamSchema, taxRegistryLookupResponseSchema } =
+			await import('./index.js')
+		expect(cuitDigitsParamSchema.safeParse('30712345663').success).toBe(true)
+		expect(cuitDigitsParamSchema.safeParse('30-71234566-3').success).toBe(false)
+		const entry = {
+			cuit: '30712345663',
+			personType: 'company',
+			legalName: 'EMPRESA SA',
+			vatCondition: 'RI',
+			activity: 'Panadería',
+			address: 'Av. Siempre Viva 742',
+			city: 'CABA',
+			province: null,
+			postalCode: '1000',
+			active: true,
+			invoiceKind: 'standard',
+			apoc: false
+		}
+		expect(
+			taxRegistryLookupResponseSchema.parse({
+				entry,
+				fetchedAt: '2026-11-04T12:00:00.000Z'
+			}).entry?.province
+		).toBeNull()
+	})
 })

@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-identity",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Contrato interno del módulo identity: usuarios, roles, sesiones (con «ver como»), dispositivos, organización de la instancia y flags guardados.",
 	"license": "UNLICENSED",
 	"type": "module",

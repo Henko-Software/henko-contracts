@@ -56,4 +56,20 @@ describe('«ver como» y organización', () => {
 			}).logoUrl
 		).toBeNull()
 	})
+
+	it('nombres por id: de 1 a 200 uuids', async () => {
+		const { userNamesRequestSchema, USER_NAMES_MAX_IDS } =
+			await import('./index.js')
+		const id = '0190a5b1-0000-7000-8000-000000000001'
+		expect(userNamesRequestSchema.safeParse({ ids: [id] }).success).toBe(true)
+		expect(userNamesRequestSchema.safeParse({ ids: [] }).success).toBe(false)
+		expect(userNamesRequestSchema.safeParse({ ids: ['u1'] }).success).toBe(
+			false
+		)
+		expect(
+			userNamesRequestSchema.safeParse({
+				ids: Array.from({ length: USER_NAMES_MAX_IDS + 1 }, () => id)
+			}).success
+		).toBe(false)
+	})
 })

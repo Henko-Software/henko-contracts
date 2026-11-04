@@ -187,6 +187,33 @@ export const createUserRequestSchema = z.object({
 export type CreateUserRequest = z.input<typeof createUserRequestSchema>
 export const createUserResponseSchema = z.object({ user: userSchema })
 
+// ---------- Nombres (cualquier persona con sesión)
+
+/** Tope de ids por pedido: alcanza para el historial de una ficha. */
+export const USER_NAMES_MAX_IDS = 200
+
+/**
+ * POST /internal/users/names — el nombre de cada id, para mostrar quién hizo
+ * cada cambio (historiales, «creado por») sin pedir permiso de listar
+ * usuarios. Lo puede pedir cualquier persona con sesión activa; los
+ * procesos automáticos, no.
+ *
+ * Sólo vuelve lo que existe y quien pide puede ver: los superadmins se
+ * nombran sólo a un superadmin sin «ver como» (rastro del superadmin). Un
+ * id que no vuelve se muestra como su rol o como nada, lo decide quien
+ * llama. Ids repetidos o desconocidos no son error.
+ */
+export const userNamesRequestSchema = z.object({
+	ids: z.array(z.uuid()).min(1).max(USER_NAMES_MAX_IDS)
+})
+export type UserNamesRequest = z.infer<typeof userNamesRequestSchema>
+export const userNameSchema = userSchema.pick({ id: true, name: true })
+export type UserName = z.infer<typeof userNameSchema>
+export const userNamesResponseSchema = z.object({
+	users: z.array(userNameSchema)
+})
+export type UserNamesResponse = z.infer<typeof userNamesResponseSchema>
+
 // ---------- Dispositivos (cajas)
 
 export const deviceSchema = z.object({

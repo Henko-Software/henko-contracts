@@ -570,6 +570,20 @@ export const setApprovedRequestSchema = z.object({
  * Responde el contacto.
  */
 
+/**
+ * POST /internal/contacts/:id/suppliers/fiscal-check — guarda lo que dijo el
+ * padrón de ARCA del CUIT de un proveedor (lo consulta el BFF en fiscal y lo
+ * trae acá). Es un dato del sistema: no entra por el alta ni la edición.
+ * Pide `contacts.write`; un contacto sin rol de proveedor es 404. Queda en
+ * la auditoría. Responde el contacto.
+ */
+export const recordFiscalCheckRequestSchema = z.object({
+	fiscalCheck: supplierFiscalCheckSchema
+})
+export type RecordFiscalCheckRequest = z.infer<
+	typeof recordFiscalCheckRequestSchema
+>
+
 // ---------- Historial
 
 export const historyEntrySchema = z.object({

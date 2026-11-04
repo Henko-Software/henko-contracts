@@ -138,7 +138,10 @@ export const BFF_ERRORS = [
 	'bff.payload_too_large',
 	'bff.invalid_json',
 	'bff.view_as_read_only',
-	'bff.contacts_unavailable'
+	'bff.contacts_unavailable',
+	'bff.fiscal_unavailable',
+	'bff.fiscal_check_not_cuit',
+	'bff.taxpayer_not_found'
 ] as const
 export type BffErrorKey = (typeof BFF_ERRORS)[number]
 
