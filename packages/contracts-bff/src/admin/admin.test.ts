@@ -1,0 +1,50 @@
+import { describe, expect, it } from 'vitest'
+
+import {
+	customerInputSchema,
+	listCustomersQuerySchema,
+	listSuppliersQuerySchema,
+	salespersonRefSchema,
+	setStatusBodySchema,
+	UNASSIGNED_SALESPERSON_ID
+} from './index.js'
+
+describe('contrato de Administración del BFF', () => {
+	it('los filtros aceptan `a,b` y `?x=a&x=b`', () => {
+		const query = listCustomersQuerySchema.parse({
+			statuses: 'active',
+			provinces: ['CF', 'BA'],
+			salespersonIds: `${UNASSIGNED_SALESPERSON_ID}`,
+			stoppedBuying: 'true'
+		})
+		expect(query).toMatchObject({
+			statuses: ['active'],
+			provinces: ['CF', 'BA'],
+			salespersonIds: ['sp-000001'],
+			stoppedBuying: true
+		})
+		expect(
+			listSuppliersQuerySchema.parse({ approved: 'true,false' }).approved
+		).toEqual([true, false])
+	})
+
+	it('el vendedor es un UUID o «Sin asignar»', () => {
+		expect(salespersonRefSchema.safeParse('sp-000001').success).toBe(true)
+		expect(salespersonRefSchema.safeParse('sp-000002').success).toBe(false)
+		expect(
+			salespersonRefSchema.safeParse('0192b0a1-7c00-7000-8000-0000000000aa')
+				.success
+		).toBe(true)
+	})
+
+	it('la ficha de cliente pide un CUIT válido', () => {
+		const result = customerInputSchema.safeParse({ docType: 'CUIT' })
+		expect(result.success).toBe(false)
+	})
+
+	it('las masivas piden al menos un id', () => {
+		expect(
+			setStatusBodySchema.safeParse({ ids: [], status: 'deleted' }).success
+		).toBe(false)
+	})
+})

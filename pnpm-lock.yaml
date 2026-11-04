@@ -53,6 +53,9 @@ importers:
       '@henko-software/contracts-console':
         specifier: workspace:^
         version: link:../contracts-console
+      '@henko-software/contracts-contacts':
+        specifier: workspace:^
+        version: link:../contracts-contacts
       '@henko-software/contracts-flags':
         specifier: workspace:^
         version: link:../contracts-flags

@@ -19,6 +19,8 @@ import {
 	viewAsStateSchema
 } from '@henko-software/contracts-identity'
 
+export * from './admin/index.js'
+
 /**
  * Contrato de la API pública de `henko-bff` (la que usa `henko-web`). La
  * sesión va en una cookie `httpOnly` (`henko_session`); el front nunca ve el
@@ -135,7 +137,8 @@ export const BFF_ERRORS = [
 	'bff.unsupported_media_type',
 	'bff.payload_too_large',
 	'bff.invalid_json',
-	'bff.view_as_read_only'
+	'bff.view_as_read_only',
+	'bff.contacts_unavailable'
 ] as const
 export type BffErrorKey = (typeof BFF_ERRORS)[number]
 
