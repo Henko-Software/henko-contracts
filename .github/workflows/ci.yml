@@ -12,3 +12,5 @@ permissions:
 jobs:
   ci:
     uses: Henko-Software/henko-standards/.github/workflows/ci-lib.yml@v0
+    with:
+      doctor: true
