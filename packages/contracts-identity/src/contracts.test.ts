@@ -32,3 +32,28 @@ describe('contrato de identity', () => {
 		).toEqual([])
 	})
 })
+
+describe('«ver como» y organización', () => {
+	it('no se puede ver como otro superadmin', async () => {
+		const { viewAsRequestSchema } = await import('./index.js')
+		expect(viewAsRequestSchema.safeParse({ role: 'cashier' }).success).toBe(
+			true
+		)
+		expect(viewAsRequestSchema.safeParse({ role: 'superadmin' }).success).toBe(
+			false
+		)
+	})
+
+	it('una organización sin logo usa las iniciales (null)', async () => {
+		const { organizationSchema } = await import('./index.js')
+		expect(
+			organizationSchema.parse({
+				id: 'org-1',
+				name: 'Pizzería de Ejemplo',
+				unit: 'Casa central',
+				logoUrl: null,
+				settings: { frontLabeling: true, commissions: false }
+			}).logoUrl
+		).toBeNull()
+	})
+})

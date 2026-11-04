@@ -1,7 +1,7 @@
 {
 	"name": "@henko-software/contracts-identity",
-	"version": "0.1.0",
-	"description": "Contrato interno del módulo identity: usuarios, roles, sesiones y dispositivos.",
+	"version": "0.2.0",
+	"description": "Contrato interno del módulo identity: usuarios, roles, sesiones (con «ver como»), dispositivos, organización de la instancia y flags guardados.",
 	"license": "UNLICENSED",
 	"type": "module",
 	"repository": {
@@ -28,6 +28,7 @@
 		"typecheck": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
+		"@henko-software/contracts-flags": "workspace:^",
 		"zod": "^4.1.0"
 	}
 }

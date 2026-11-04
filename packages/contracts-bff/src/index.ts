@@ -5,10 +5,18 @@ import {
 	submitFeedbackSchema
 } from '@henko-software/contracts-console'
 import {
+	effectiveFlagsSchema,
+	flagNodeSchema,
+	setFlagRequestSchema
+} from '@henko-software/contracts-flags'
+import {
 	createUserRequestSchema,
 	deviceSchema,
+	organizationSchema,
 	registerDeviceRequestSchema,
-	userSchema
+	userSchema,
+	viewAsRequestSchema,
+	viewAsStateSchema
 } from '@henko-software/contracts-identity'
 
 /**
@@ -38,10 +46,61 @@ export const meSchema = userSchema.pick({
 })
 export type Me = z.infer<typeof meSchema>
 
-export const loginResponseSchema = z.object({ user: meSchema })
+/**
+ * GET /api/me — la sesión como la usa el front.
+ *
+ * - `user`: como quién se pinta la app. Sin «ver como», la persona real. Con
+ *   «ver como» un rol, la persona real con el rol y los locales simulados;
+ *   con «ver como» una persona concreta, esa persona. El menú, el Inicio y lo
+ *   que se muestra salen de acá.
+ * - `realUser`: quién está adentro de verdad (para la barra «Estás viendo
+ *   como… · Volver a superadmin» y el menú de la cuenta).
+ * - `organization`: la central de la instancia; `unit` es dónde está parado
+ *   `user` («Casa central» o su local).
+ * - `flags`: los flags efectivos de `user`, todas las claves, ya resueltos
+ *   (el superadmin sin «ver como» los tiene todos en `true`). El front no
+ *   recalcula: si `flags[clave]` es `false`, la sección no se muestra.
+ * - `viewAs`: el «ver como» en curso, o `null`. Con `readOnly`, toda
+ *   mutación responde 403 `bff.view_as_read_only`.
+ */
+export const meResponseSchema = z.object({
+	user: meSchema,
+	realUser: meSchema,
+	organization: organizationSchema,
+	flags: effectiveFlagsSchema,
+	viewAs: viewAsStateSchema.nullable()
+})
+export type MeResponse = z.infer<typeof meResponseSchema>
 
-/** GET /api/me */
-export const meResponseSchema = z.object({ user: meSchema })
+/** El login responde lo mismo que `/api/me`. */
+export const loginResponseSchema = meResponseSchema
+
+/**
+ * POST /api/me/view-as — un superadmin empieza (o cambia) a «ver como» un
+ * rol, o un rol y una persona concreta (sólo lectura). Responde el `/me`
+ * nuevo: el front invalida su sesión y pinta de nuevo donde estaba.
+ * Otro rol: 403 `identity.view_as_forbidden`.
+ *
+ * DELETE /api/me/view-as — vuelve a superadmin (idempotente). Responde el
+ * `/me` nuevo.
+ */
+export const viewAsBodySchema = viewAsRequestSchema
+export const viewAsResultSchema = meResponseSchema
+
+/**
+ * GET /api/flags — el panel de flags en árbol (sólo superadmin real; si
+ * no, 403). Cada nodo dice su valor propio o heredado, de qué capa sale, lo
+ * que ven los usuarios y lo guardado en la base.
+ *
+ * PUT /api/flags/:key — `{ enabled: true | false | null }` (`null` = vuelve a
+ * heredar). Queda auditado. Responde el árbol nuevo. Los demás usuarios lo
+ * ven en hasta 30 s (la caché de sesiones del BFF).
+ */
+export const flagTreeResponseSchema = z.object({
+	flags: z.array(flagNodeSchema)
+})
+export type FlagTreeResponse = z.infer<typeof flagTreeResponseSchema>
+export const setFlagBodySchema = setFlagRequestSchema
 
 /** POST /api/auth/logout — responde 204 y borra la cookie. */
 
@@ -68,7 +127,23 @@ export const registerDeviceResultSchema = z.object({
 export const submitFeedbackBodySchema = submitFeedbackSchema
 export const submitFeedbackResultSchema = ingestFeedbackResponseSchema
 
-/** Forma de todo error. */
+/** Errores propios del BFF que el front puede mirar por `code`. */
+export const BFF_ERRORS = [
+	'bff.too_many_attempts',
+	'bff.login_unavailable',
+	'bff.feedback_unavailable',
+	'bff.unsupported_media_type',
+	'bff.payload_too_large',
+	'bff.invalid_json',
+	'bff.view_as_read_only'
+] as const
+export type BffErrorKey = (typeof BFF_ERRORS)[number]
+
+/**
+ * Forma de todo error. En los de validación (`common.validation`),
+ * `details.fields` trae el problema de cada campo, en castellano, por su
+ * ruta (`email`, `items.0.price`; `_` = el pedido entero).
+ */
 export const errorBodySchema = z.object({
 	error: z.object({
 		code: z.string(),
