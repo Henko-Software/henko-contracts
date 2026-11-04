@@ -10,6 +10,7 @@ depende sólo de los contratos que usa.
 | `@henko-software/contracts-flags`        | catálogo de feature flags (las claves copian la nav), valores guardados y efectivos, y el nodo del panel                                                                        |
 | `@henko-software/contracts-bff`          | API pública de `henko-bff`, la que usa `henko-web`                                                                                                                              |
 | `@henko-software/contracts-console`      | feedback que llega de cada instancia, API de la bandeja y trazas de la Henko Console                                                                                            |
+| `@henko-software/contracts-fiscal`       | API interna de `fiscal` (comprobantes con CAE o CAEA, numeración, puntos de venta, padrón), tablas de códigos de ARCA, errores y eventos                                        |
 | `@henko-software/contracts-contacts`     | API interna de `contacts`: contactos con roles, condiciones de pago, tablas auxiliares, errores y eventos                                                                       |
 | `@henko-software/contracts-orchestrator` | API interna del orquestador (flujos, pasos, intentos, arranque idempotente por `commandId`, cancelación), cabecera de idempotencia de los comandos a módulos, errores y eventos |
 

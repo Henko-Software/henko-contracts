@@ -75,6 +75,15 @@ importers:
         specifier: ^4.1.0
         version: 4.6.7
 
+  packages/contracts-fiscal:
+    dependencies:
+      '@henko-software/contracts-flags':
+        specifier: workspace:^
+        version: link:../contracts-flags
+      zod:
+        specifier: ^4.1.0
+        version: 4.6.7
+
   packages/contracts-flags:
     dependencies:
       zod:
