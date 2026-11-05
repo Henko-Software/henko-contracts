@@ -20,6 +20,7 @@ import {
 } from '@henko-software/contracts-identity'
 
 export * from './admin/index.js'
+export * from './purchasing.js'
 export * from './sales.js'
 export * from './salesReports.js'
 
@@ -148,7 +149,9 @@ export const BFF_ERRORS = [
 	/** No se da de baja una lista de precios que tienen clientes activos. */
 	'bff.price_list_in_use',
 	/** El BFF no tiene `SALES_URL`: Ventas no está configurado. */
-	'bff.sales_unavailable'
+	'bff.sales_unavailable',
+	/** El BFF no tiene `PURCHASING_URL`: Compras no está configurado. */
+	'bff.purchasing_unavailable'
 ] as const
 export type BffErrorKey = (typeof BFF_ERRORS)[number]
 

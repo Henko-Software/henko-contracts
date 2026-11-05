@@ -65,6 +65,9 @@ importers:
       '@henko-software/contracts-identity':
         specifier: workspace:^
         version: link:../contracts-identity
+      '@henko-software/contracts-purchasing':
+        specifier: workspace:^
+        version: link:../contracts-purchasing
       '@henko-software/contracts-sales':
         specifier: workspace:^
         version: link:../contracts-sales
