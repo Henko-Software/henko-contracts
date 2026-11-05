@@ -31,15 +31,15 @@ export const taxRegistryEntrySchema = z.object({
 	/** `false` si el CUIT está dado de baja en ARCA. */
 	active: z.boolean(),
 	/**
-	 * Qué factura A le corresponde (RG 5762). Mientras fiscal no tenga esa
-	 * consulta, el BFF manda `standard`.
+	 * Qué factura A le corresponde (RG 5762). `null` = no se sabe (fiscal
+	 * todavía no tiene esa consulta). Decisión asumida 20: no bloquea, avisa.
 	 */
-	invoiceKind: invoiceKindSchema,
+	invoiceKind: invoiceKindSchema.nullable(),
 	/**
-	 * Si figura en la base APOC. Mientras fiscal no tenga esa consulta, el BFF
-	 * manda `false`.
+	 * Si figura en la base APOC. `null` = no se sabe (fiscal todavía no tiene
+	 * esa consulta). Decisión asumida 20: no bloquea, avisa.
 	 */
-	apoc: z.boolean()
+	apoc: z.boolean().nullable()
 })
 export type TaxRegistryEntry = z.infer<typeof taxRegistryEntrySchema>
 
