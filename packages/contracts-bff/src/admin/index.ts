@@ -1,5 +1,6 @@
 export * from './carriers.js'
 export * from './catalog.js'
+export * from './chartOfAccounts.js'
 export * from './common.js'
 export * from './contacts.js'
 export * from './customers.js'

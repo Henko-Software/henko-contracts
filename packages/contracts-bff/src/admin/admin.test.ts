@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+	accountMovementSchema,
 	bffPriceSchema,
+	chartAccountInputSchema,
 	customerInputSchema,
 	listBffArticlesQuerySchema,
+	listBffChartAccountsQuerySchema,
 	listCustomersQuerySchema,
 	listSuppliersQuerySchema,
 	salespersonRefSchema,
 	setStatusBodySchema,
+	supplierMovementSchema,
 	UNASSIGNED_SALESPERSON_ID
 } from './index.js'
 
@@ -97,5 +101,56 @@ describe('contrato de Administración del BFF', () => {
 		expect(
 			listBffArticlesQuerySchema.parse({ usage: 'sale,purchase' }).usage
 		).toEqual(['sale', 'purchase'])
+	})
+
+	it('cuenta corriente y plan de cuentas con las formas del front', () => {
+		expect(
+			accountMovementSchema.safeParse({
+				id: 'm1',
+				date: '2026-11-01',
+				kind: 'invoice',
+				number: '0003-00000001',
+				dueDate: null,
+				amount: 1000,
+				settled: false,
+				applied: 0
+			}).success
+		).toBe(true)
+		expect(
+			supplierMovementSchema.safeParse({
+				id: 'm2',
+				date: '2026-11-01',
+				kind: 'payment_order',
+				letter: null,
+				number: '00004-00000001',
+				description: null,
+				dueDate: null,
+				company: '1',
+				currency: 'ARS',
+				exchangeRate: 1,
+				originalAmount: -500,
+				amount: -500,
+				pending: 0,
+				applications: []
+			}).success
+		).toBe(true)
+		expect(
+			chartAccountInputSchema.safeParse({
+				code: '1-0-00-0-000',
+				name: 'Activo',
+				kind: 'title',
+				parentId: null,
+				isResult: false,
+				systemManaged: false,
+				uses: ['sales'],
+				notes: null
+			}).success
+		).toBe(false)
+		expect(
+			listBffChartAccountsQuerySchema.parse({
+				uses: 'purchases',
+				results: 'true'
+			})
+		).toMatchObject({ uses: ['purchases'], results: [true] })
 	})
 })

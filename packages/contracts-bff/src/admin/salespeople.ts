@@ -72,3 +72,23 @@ export const salespersonResponseSchema = z.object({
 export const salespersonHistoryResponseSchema = z.object({
 	history: z.array(historyEventSchema)
 })
+
+/**
+ * GET /api/salespeople/sales?months=6 — lo facturado (facturas y notas de
+ * débito menos notas de crédito) y lo cobrado por mes de cada vendedor
+ * activo, del más viejo al más nuevo (el último es el mes en curso), y el
+ * mes en curso por rubro (`SalespersonSales` del front). Centavos.
+ */
+export const salespersonSalesQuerySchema = z.object({
+	months: z.coerce.number().int().min(1).max(24).default(6)
+})
+const salesAmounts = { amount: z.number().int(), collected: z.number().int() }
+export const salespersonSalesSchema = z.object({
+	salespersonId: recordIdSchema,
+	months: z.array(z.object({ period: z.string(), ...salesAmounts })),
+	categories: z.array(z.object({ category: z.string(), ...salesAmounts }))
+})
+export type SalespersonSales = z.infer<typeof salespersonSalesSchema>
+export const salespersonSalesResponseSchema = z.object({
+	sales: z.array(salespersonSalesSchema)
+})
