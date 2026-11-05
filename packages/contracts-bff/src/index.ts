@@ -21,6 +21,7 @@ import {
 
 export * from './admin/index.js'
 export * from './network.js'
+export * from './people.js'
 export * from './production.js'
 export * from './purchasing.js'
 export * from './sales.js'
@@ -164,7 +165,9 @@ export const BFF_ERRORS = [
 	/** El BFF no tiene `PRODUCTION_URL`: Producción y Trazabilidad no están configuradas. */
 	'bff.production_unavailable',
 	/** El BFF no tiene `NETWORK_URL`: Aperturas y Lugares no están configurados. */
-	'bff.network_unavailable'
+	'bff.network_unavailable',
+	/** El BFF no tiene `PEOPLE_URL`: Empleados no está configurado. */
+	'bff.people_unavailable'
 ] as const
 export type BffErrorKey = (typeof BFF_ERRORS)[number]
 

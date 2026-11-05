@@ -68,6 +68,9 @@ importers:
       '@henko-software/contracts-network':
         specifier: workspace:^
         version: link:../contracts-network
+      '@henko-software/contracts-people':
+        specifier: workspace:^
+        version: link:../contracts-people
       '@henko-software/contracts-production':
         specifier: workspace:^
         version: link:../contracts-production
