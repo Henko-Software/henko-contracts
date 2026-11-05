@@ -1,0 +1,35 @@
+{
+	"name": "@henko-software/contracts-people",
+	"version": "0.1.0",
+	"description": "Contrato del módulo people: empleados (ficha, lugar de trabajo, egreso, papeles con vencimiento), ausencias con saldo de vacaciones, la Semana y los avisos.",
+	"license": "UNLICENSED",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Henko-Software/henko-contracts.git",
+		"directory": "packages/contracts-people"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"henko-source": "./src/index.ts",
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@henko-software/contracts-common": "workspace:^",
+		"@henko-software/contracts-contacts": "workspace:^",
+		"zod": "^4.1.0"
+	}
+}
