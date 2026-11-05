@@ -5,6 +5,7 @@ import {
 	contactKindSchema,
 	createLookupEntryRequestSchema,
 	cuitSchema,
+	DEFAULT_CONTACT_KIND,
 	lookupEntrySchema,
 	lookupTableSchema,
 	recordStatusSchema,
@@ -42,15 +43,17 @@ export const screenContactSchema = z.object({
 })
 export type ScreenContact = z.infer<typeof screenContactSchema>
 
-/** POST /api/contacts */
-export const screenContactInputSchema = screenContactSchema.pick({
-	kind: true,
-	name: true,
-	taxId: true,
-	email: true,
-	phone: true,
-	roles: true
-})
+/** POST /api/contacts — sin `kind`, empresa (decisión asumida 19). */
+export const screenContactInputSchema = screenContactSchema
+	.pick({
+		kind: true,
+		name: true,
+		taxId: true,
+		email: true,
+		phone: true,
+		roles: true
+	})
+	.extend({ kind: contactKindSchema.default(DEFAULT_CONTACT_KIND) })
 export type ScreenContactInput = z.infer<typeof screenContactInputSchema>
 
 /** GET /api/contacts?query=&role= — por nombre. */

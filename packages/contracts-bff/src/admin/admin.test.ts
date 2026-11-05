@@ -12,12 +12,24 @@ import {
 	listCustomersQuerySchema,
 	listSuppliersQuerySchema,
 	salespersonRefSchema,
+	screenContactInputSchema,
 	setStatusBodySchema,
 	supplierMovementSchema,
 	UNASSIGNED_SALESPERSON_ID
 } from './index.js'
 
 describe('contrato de Administración del BFF', () => {
+	it('un contacto sin persona o empresa es empresa (decisión 19)', () => {
+		const input = screenContactInputSchema.parse({
+			name: 'Molinos',
+			taxId: null,
+			email: null,
+			phone: null,
+			roles: ['employee']
+		})
+		expect(input.kind).toBe('company')
+	})
+
 	it('los filtros aceptan `a,b` y `?x=a&x=b`', () => {
 		const query = listCustomersQuerySchema.parse({
 			statuses: 'active',
