@@ -6,10 +6,24 @@ export const CATALOG_ERRORS = [
 	'catalog.price_not_found',
 	/** El cambio no existe o ya se deshizo (en el front, `H-PR002`). */
 	'catalog.price_change_not_found',
+	/**
+	 * El cambio ya no se puede deshacer: pasó la ventana
+	 * (`PRICE_CHANGE_UNDO_HOURS`) o hubo otro cambio después en alguna de sus
+	 * listas (en el front, `H-PR002`).
+	 */
+	'catalog.price_change_expired',
 	'catalog.discount_scale_not_found',
 	/** Ya hay un agrupamiento o una lista con ese nombre. */
 	'catalog.name_taken',
 	/** Algo apunta a lo que no existe (agrupamiento, componente, presentación). */
-	'catalog.invalid_reference'
+	'catalog.invalid_reference',
+	/** El artículo no tiene foto guardada. */
+	'catalog.photo_not_found',
+	/** No es una imagen que aceptamos o pesa más de la cuenta. */
+	'catalog.photo_invalid',
+	/** No hay una fila con ese código en esa tabla auxiliar. */
+	'catalog.lookup_not_found',
+	/** Ya hay una fila con ese código en esa tabla auxiliar. */
+	'catalog.lookup_code_taken'
 ] as const
 export type CatalogErrorKey = (typeof CATALOG_ERRORS)[number]

@@ -148,11 +148,19 @@ export const bulkIncreasePreviewSchema = z.object({
 })
 export type BulkIncreasePreview = z.infer<typeof bulkIncreasePreviewSchema>
 
+/** Horas en que un cambio de precios se puede deshacer (decisión asumida 1). */
+export const PRICE_CHANGE_UNDO_HOURS = 24
+
 /** Un cambio hecho, para deshacerlo con `POST /internal/prices/changes/:id/revert`. */
 export const priceChangeSchema = z.object({
 	id: catalogIdSchema,
 	count: z.number().int().min(0),
-	at: z.iso.datetime()
+	at: z.iso.datetime(),
+	/**
+	 * Hasta cuándo se puede deshacer (`at` + `PRICE_CHANGE_UNDO_HOURS`). Un
+	 * cambio posterior en alguna de sus listas lo cierra antes.
+	 */
+	revertibleUntil: z.iso.datetime()
 })
 export type PriceChange = z.infer<typeof priceChangeSchema>
 

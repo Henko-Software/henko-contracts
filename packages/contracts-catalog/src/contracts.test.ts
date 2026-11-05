@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+	articlePhotoRequestSchema,
+	catalogLookupTableSchema,
 	createDiscountScaleRequestSchema,
 	listArticlesQuerySchema,
+	priceListRequestSchema,
 	priceTargetSchema,
 	resolvePricesRequestSchema
 } from './index.js'
@@ -68,5 +71,40 @@ describe('contrato de catalog', () => {
 				items: [{ articleId: ID, presentationId: null }]
 			})
 		).toMatchObject({ at: null, customerId: null })
+	})
+
+	it('la foto viaja en base64 y sólo de los tipos que se guardan', () => {
+		expect(
+			articlePhotoRequestSchema.safeParse({
+				contentType: 'image/webp',
+				data: 'UklGRg=='
+			}).success
+		).toBe(true)
+		expect(
+			articlePhotoRequestSchema.safeParse({
+				contentType: 'image/gif',
+				data: 'UklGRg=='
+			}).success
+		).toBe(false)
+		expect(
+			articlePhotoRequestSchema.safeParse({
+				contentType: 'image/webp',
+				data: 'data:image/webp;base64,UklGRg=='
+			}).success
+		).toBe(false)
+	})
+
+	it('categorías y envases son las tablas auxiliares de catalog', () => {
+		expect(catalogLookupTableSchema.options).toEqual([
+			'article_categories',
+			'containers'
+		])
+	})
+
+	it('la lista principal se marca al crear o editar, y es opcional', () => {
+		expect(priceListRequestSchema.parse({ name: 'A' })).toEqual({ name: 'A' })
+		expect(
+			priceListRequestSchema.parse({ name: 'A', isBase: true }).isBase
+		).toBe(true)
 	})
 })

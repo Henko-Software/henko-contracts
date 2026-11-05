@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { catalogLookupTableSchema } from '@henko-software/contracts-catalog'
 import {
 	contactKindSchema,
 	createLookupEntryRequestSchema,
@@ -69,11 +70,16 @@ export const screenContactResponseSchema = z.object({
 
 /**
  * GET /api/lookups/:table?statuses=active (por defecto, las activas) —
- * Tipo de Cliente, Canal de Venta y rubros de proveedores, por `position`.
+ * Tipo de Cliente, Canal de Venta y rubros de proveedores (contacts),
+ * categorías y envases de artículos (catalog), por `position`.
  * POST /api/lookups/:table · PUT /api/lookups/:table/:code ·
- * POST /api/lookups/:table/status (204): el ABM, igual que en `contacts`.
+ * POST /api/lookups/:table/status (204): el ABM, igual en los dos módulos.
  */
-export const bffLookupTableSchema = lookupTableSchema
+export const bffLookupTableSchema = z.enum([
+	...lookupTableSchema.options,
+	...catalogLookupTableSchema.options
+])
+export type BffLookupTable = z.infer<typeof bffLookupTableSchema>
 export const listLookupBffQuerySchema = z.object({
 	statuses: listParam(recordStatusSchema)
 })

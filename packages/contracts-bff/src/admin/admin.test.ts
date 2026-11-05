@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
 	accountMovementSchema,
+	bffLookupTableSchema,
+	bffPhotoUrlSchema,
 	bffPriceSchema,
 	chartAccountInputSchema,
 	customerInputSchema,
@@ -152,5 +154,20 @@ describe('contrato de Administración del BFF', () => {
 				results: 'true'
 			})
 		).toMatchObject({ uses: ['purchases'], results: [true] })
+	})
+
+	it('la foto de un artículo: URL, data: o la ruta de la foto guardada', () => {
+		const ok = (value: string) => bffPhotoUrlSchema.safeParse(value).success
+		expect(ok('/api/articles/abc/photo?v=123')).toBe(true)
+		expect(ok('https://fotos.example/a.webp')).toBe(true)
+		expect(ok('data:image/webp;base64,UklGRg==')).toBe(true)
+		expect(ok('/api/otra-cosa')).toBe(false)
+	})
+
+	it('las tablas auxiliares de catalog pasan por /api/lookups', () => {
+		expect(bffLookupTableSchema.safeParse('article_categories').success).toBe(
+			true
+		)
+		expect(bffLookupTableSchema.safeParse('customer_types').success).toBe(true)
 	})
 })

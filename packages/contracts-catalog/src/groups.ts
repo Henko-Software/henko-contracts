@@ -58,6 +58,12 @@ export const priceListSchema = z.object({
 	status: recordStatusSchema,
 	/** Último cambio de un precio de la lista (no del nombre). Al crearla, la fecha de alta. */
 	pricesUpdatedAt: z.iso.datetime(),
+	/**
+	 * La lista principal (la base para comparar y la que propone el alta de
+	 * un cliente). Hay una sola: marcar otra desmarca la anterior; dar de
+	 * baja la base la desmarca.
+	 */
+	isBase: z.boolean(),
 	version: z.number().int().min(1),
 	createdAt: z.iso.datetime(),
 	updatedAt: z.iso.datetime()
@@ -75,7 +81,9 @@ export const listPriceListsResponseSchema = z.object({
  */
 export const priceListRequestSchema = z.object({
 	id: catalogIdSchema.optional(),
-	name: z.string().trim().min(1).max(80)
+	name: z.string().trim().min(1).max(80),
+	/** `true` la hace la principal. Sin el campo: al crear, no; al editar, queda como estaba. */
+	isBase: z.boolean().optional()
 })
 
 export const priceListResponseSchema = z.object({ priceList: priceListSchema })
@@ -103,6 +111,7 @@ export const priceListEventSchema = z.object({
 		code: true,
 		name: true,
 		status: true,
+		isBase: true,
 		version: true
 	})
 })

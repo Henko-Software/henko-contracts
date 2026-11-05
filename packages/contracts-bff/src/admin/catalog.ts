@@ -3,6 +3,7 @@ import { z } from 'zod'
 import {
 	articleFieldsSchema,
 	articleGroupSchema,
+	articlePhotoRequestSchema,
 	articleSchema,
 	bulkIncreaseInputSchema,
 	bulkIncreasePreviewSchema,
@@ -30,16 +31,48 @@ import {
 
 // ---------- Artículos (flag `products.articles`)
 
-export const bffArticleSchema = articleSchema.omit({
-	version: true,
-	createdAt: true,
-	updatedAt: true
-})
+/**
+ * La foto: una URL de afuera, un `data:` URL (lo de antes) o la ruta del BFF
+ * a la foto guardada en catalog (`/api/articles/:id/photo?v=…`, mismo origen
+ * que el front).
+ */
+export const bffPhotoUrlSchema = z
+	.string()
+	.max(300_000)
+	.refine(
+		value =>
+			/^\/api\/articles\/[^/?#]+\/photo(\?v=\d+)?$/.test(value) ||
+			z.url().safeParse(value).success,
+		{ message: 'URL de la foto inválida' }
+	)
+
+/** `photoUrl` ya resuelto por el BFF (la foto guardada gana); sin `photo`. */
+export const bffArticleSchema = articleSchema
+	.omit({
+		version: true,
+		createdAt: true,
+		updatedAt: true,
+		photo: true
+	})
+	.extend({ photoUrl: bffPhotoUrlSchema.nullable() })
 export type BffArticle = z.infer<typeof bffArticleSchema>
 
-/** POST /api/articles · PUT /api/articles/:id: `ArticleInput` del front. */
-export const articleInputSchema = articleFieldsSchema
+/**
+ * POST /api/articles · PUT /api/articles/:id: `ArticleInput` del front. Si
+ * `photoUrl` es la ruta de la foto guardada, la foto queda como está.
+ */
+export const articleInputSchema = articleFieldsSchema.extend({
+	photoUrl: bffPhotoUrlSchema.nullable()
+})
 export type ArticleInput = z.input<typeof articleInputSchema>
+
+/**
+ * PUT /api/articles/:id/photo → `{ article }`: la imagen en base64 (el
+ * front la achica antes). DELETE /api/articles/:id/photo → `{ article }`.
+ * GET /api/articles/:id/photo → la imagen (bytes, con su `Content-Type`).
+ */
+export const articlePhotoBodySchema = articlePhotoRequestSchema
+export type ArticlePhotoBody = z.infer<typeof articlePhotoBodySchema>
 
 /** GET /api/articles?query=&statuses=&kinds=&categories=&usage=&groupIds= */
 export const listBffArticlesQuerySchema = listArticlesQuerySchema
@@ -86,7 +119,8 @@ export const bffPriceListSchema = priceListSchema.pick({
 	code: true,
 	name: true,
 	status: true,
-	pricesUpdatedAt: true
+	pricesUpdatedAt: true,
+	isBase: true
 })
 export type BffPriceList = z.infer<typeof bffPriceListSchema>
 
@@ -95,7 +129,9 @@ export type BffPriceList = z.infer<typeof bffPriceListSchema>
  * que tiene clientes activos responde `bff.price_list_in_use`.
  */
 export const priceListInputSchema = z.object({
-	name: z.string().trim().min(1).max(80)
+	name: z.string().trim().min(1).max(80),
+	/** `true` la hace la lista principal (desmarca la anterior). */
+	isBase: z.boolean().optional()
 })
 
 export const listPriceListsBffResponseSchema = z.object({

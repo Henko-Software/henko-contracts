@@ -259,12 +259,47 @@ export const articleFieldsSchema = z.object({
 	allergens: z.array(z.enum(ALLERGENS)),
 	notes: z.string().max(2000).nullable(),
 	/**
-	 * URL de la foto. Hoy el front manda un `data:` URL achicado; la carga
-	 * como archivo es una decisión pendiente (`docs/back/articles.md`).
+	 * URL de una foto de afuera o un `data:` URL (lo que mandaba el front
+	 * antes de la carga como archivo). La foto guardada por catalog va en
+	 * `photo` y la sube `PUT /internal/articles/:id/photo`; al subirla, esto
+	 * queda en `null`.
 	 */
 	photoUrl: z.string().url().max(300_000).nullable()
 })
 export type ArticleFields = z.infer<typeof articleFieldsSchema>
+
+/** Tipos de imagen que se guardan (el front manda WebP achicada). */
+export const ARTICLE_PHOTO_TYPES = [
+	'image/webp',
+	'image/jpeg',
+	'image/png'
+] as const
+/** Tope de la foto ya decodificada, en bytes. */
+export const ARTICLE_PHOTO_MAX_BYTES = 5 * 1024 * 1024
+
+export const articlePhotoMetaSchema = z.object({
+	contentType: z.enum(ARTICLE_PHOTO_TYPES),
+	size: z.number().int().min(1).max(ARTICLE_PHOTO_MAX_BYTES),
+	updatedAt: z.iso.datetime()
+})
+export type ArticlePhotoMeta = z.infer<typeof articlePhotoMetaSchema>
+
+/**
+ * PUT /internal/articles/:id/photo → `{ article }`. La imagen en base64
+ * (sin el prefijo `data:`). DELETE /internal/articles/:id/photo la saca.
+ */
+export const articlePhotoRequestSchema = z.object({
+	contentType: z.enum(ARTICLE_PHOTO_TYPES),
+	data: z
+		.string()
+		.min(4)
+		.max(Math.ceil((ARTICLE_PHOTO_MAX_BYTES * 4) / 3) + 4)
+		.regex(/^[A-Za-z0-9+/]+={0,2}$/)
+})
+export type ArticlePhotoRequest = z.infer<typeof articlePhotoRequestSchema>
+
+/** GET /internal/articles/:id/photo — la imagen guardada, en base64. */
+export const articlePhotoResponseSchema = articlePhotoRequestSchema
 
 export const articleSchema = z.object({
 	id: catalogIdSchema,
@@ -272,6 +307,8 @@ export const articleSchema = z.object({
 	code: airesCodeSchema,
 	status: recordStatusSchema,
 	...articleFieldsSchema.shape,
+	/** La foto guardada por catalog (`GET /internal/articles/:id/photo`), si hay. */
+	photo: articlePhotoMetaSchema.nullable(),
 	version: z.number().int().min(1),
 	createdAt: z.iso.datetime(),
 	updatedAt: z.iso.datetime()
