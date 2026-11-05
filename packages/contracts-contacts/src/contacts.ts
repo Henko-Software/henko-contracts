@@ -49,6 +49,13 @@ export type ContactRole = z.infer<typeof contactRoleSchema>
 export const contactKindSchema = z.enum(['person', 'company'])
 export type ContactKind = z.infer<typeof contactKindSchema>
 
+/**
+ * Decisión asumida 19 (ronda 2026-11-05): si el alta no dice si es persona o
+ * empresa, es empresa (casi todos los clientes y proveedores de la red lo
+ * son). Se cambia acá.
+ */
+export const DEFAULT_CONTACT_KIND: ContactKind = 'company'
+
 // ---------- Datos de contacto (comunes)
 
 /**
@@ -247,12 +254,18 @@ export const supplierProfileInputSchema = z.object({
 	})
 })
 
+/**
+ * La «Situación en ARCA» de un proveedor. Decisión asumida 20 (ronda
+ * 2026-11-05): lo que el padrón no dice es `null` = **no se sabe**
+ * (`invoiceKind`: falta la consulta de la RG 5762; `apoc`: falta la de la
+ * base APOC). No se dice «común» ni «no figura»: no frena el pago, avisa.
+ */
 export const supplierFiscalCheckSchema = z.object({
 	checkedAt: isoDateSchema,
 	active: z.boolean(),
 	vatCondition: vatConditionSchema,
-	invoiceKind: invoiceKindSchema,
-	apoc: z.boolean()
+	invoiceKind: invoiceKindSchema.nullable(),
+	apoc: z.boolean().nullable()
 })
 
 export const pendingCbuSchema = z.object({
@@ -452,6 +465,8 @@ export const createContactRequestSchema = z
 		 */
 		id: z.uuid().optional(),
 		...contactFields,
+		/** Si no viene, `DEFAULT_CONTACT_KIND` (empresa). */
+		kind: contactKindSchema.default(DEFAULT_CONTACT_KIND),
 		roles: z
 			.array(contactRoleInputSchema)
 			.min(1)

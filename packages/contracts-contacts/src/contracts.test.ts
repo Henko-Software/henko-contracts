@@ -4,6 +4,8 @@ import {
 	createContactRequestSchema,
 	createPaymentTermRequestSchema,
 	cuitSchema,
+	DEFAULT_CONTACT_KIND,
+	docTakenDetailsSchema,
 	isValidCbu,
 	listContactsQuerySchema
 } from './index.js'
@@ -54,6 +56,30 @@ describe('contrato de contacts', () => {
 				...base,
 				docType: 'DNI',
 				docNumber: '12.345.678'
+			}).success
+		).toBe(true)
+	})
+
+	it('sin `kind`, el alta es de una empresa (decisión 19)', () => {
+		const parsed = createContactRequestSchema.parse({
+			name: 'Ana',
+			legalName: null,
+			docType: null,
+			docNumber: null,
+			vatCondition: null,
+			contact: info,
+			localId: null,
+			roles: [{ role: 'employee' as const, profile: {} }]
+		})
+		expect(DEFAULT_CONTACT_KIND).toBe('company')
+		expect(parsed.kind).toBe('company')
+	})
+
+	it('CUIT repetido: el existente puede no mostrarse (decisión 18)', () => {
+		expect(
+			docTakenDetailsSchema.safeParse({
+				fields: { docNumber: 'Ya existe.' },
+				existing: null
 			}).success
 		).toBe(true)
 	})
