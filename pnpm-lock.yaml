@@ -77,6 +77,9 @@ importers:
       '@henko-software/contracts-purchasing':
         specifier: workspace:^
         version: link:../contracts-purchasing
+      '@henko-software/contracts-reporting':
+        specifier: workspace:^
+        version: link:../contracts-reporting
       '@henko-software/contracts-sales':
         specifier: workspace:^
         version: link:../contracts-sales

@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-reporting",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Contrato del módulo reporting: rubros del estado de resultados (árbol con subtotales por fórmula), de dónde sale cada importe y el reporte de un mes.",
 	"license": "UNLICENSED",
 	"type": "module",

@@ -24,7 +24,8 @@ export type SourceKind = z.infer<typeof sourceKindSchema>
  */
 export const sourceKeySchema = z
 	.string()
-	.regex(/^(sales|purchases):[A-Za-z0-9_.-]{1,60}$/)
+	.max(80)
+	.regex(/^(sales|purchases):\S.*$/)
 export type SourceKey = z.infer<typeof sourceKeySchema>
 
 export const NO_CATEGORY = '_none'
