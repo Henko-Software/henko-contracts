@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import {
+	articleCostChangeSchema,
 	articleFieldsSchema,
 	articleGroupSchema,
 	articlePhotoRequestSchema,
@@ -83,6 +84,21 @@ export const listArticlesBffResponseSchema = z.object({
 })
 /** GET /api/articles/:id · POST · PUT · POST /api/articles/:id/duplicate */
 export const articleBffResponseSchema = z.object({ article: bffArticleSchema })
+
+/**
+ * Un cambio del costo de un insumo por una factura de compra: lo de catalog
+ * con el nombre de quien aceptó o anuló (vacío si fue un superadmin y quien
+ * mira no lo es).
+ */
+export const bffArticleCostChangeSchema = articleCostChangeSchema
+	.omit({ actor: true })
+	.extend({ user: z.string() })
+export type BffArticleCostChange = z.infer<typeof bffArticleCostChangeSchema>
+
+/** GET /api/articles/:id/cost-history — del más nuevo al más viejo. */
+export const articleCostHistoryBffResponseSchema = z.object({
+	changes: z.array(bffArticleCostChangeSchema)
+})
 
 // GET /api/articles/:id/history → `historyResponseSchema` (common).
 // POST /api/articles/status → `setStatusBodySchema` (common). 204.

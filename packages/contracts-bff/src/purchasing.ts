@@ -15,6 +15,7 @@ import {
 	purchaseInvoiceLineSchema,
 	purchaseOrderInputSchema,
 	purchaseOrderLineSchema,
+	purchasePricesResponseSchema,
 	receptionInputSchema,
 	receptionLineSchema,
 	truckCheckSchema,
@@ -95,17 +96,29 @@ export const bffReceptionSchema = z.object({
 	date: isoDateSchema,
 	time: z.string().regex(/^\d{2}:\d{2}$/),
 	deliveryNote: z.string().max(20).nullable(),
+	/**
+	 * La foto del remito: la ruta del BFF a la guardada
+	 * (`/api/receptions/:id/photo?v=…`) o una dirección de afuera.
+	 */
 	photo: z.string().nullable(),
 	truck: truckCheckSchema,
 	lines: z.array(receptionLineSchema).min(1),
 	notes: z.string().max(500).nullable(),
 	closesOrder: z.boolean(),
+	/** Se recibió sin pedido: el pedido se armó con lo que llegó (pregunta 74). */
+	withoutOrder: z.boolean(),
 	/** Nombre de quien recibió. */
 	receivedBy: z.string()
 })
 export type BffReception = z.infer<typeof bffReceptionSchema>
 
-/** POST /api/receptions: `ReceptionInput` del front. */
+/**
+ * POST /api/receptions: `ReceptionInput` del front. `photo` puede ser el
+ * `data:` URL del celular (se guarda como archivo). Sin pedido
+ * (`purchaseOrderId: null`) va `supplierId`; el precio de cada renglón, si
+ * no viene, lo pone el BFF con el costo del catálogo.
+ * GET /api/receptions/:id/photo → la foto (bytes, con su `Content-Type`).
+ */
 export const bffReceptionInputSchema = receptionInputSchema
 
 /** GET /api/receptions?query=&supplierIds=&purchaseOrderId= */
@@ -131,6 +144,17 @@ export const receptionDetailBffResponseSchema = z.object({
 })
 /** POST /api/receptions/:id/void · /api/purchase-invoices/:id/void */
 export const purchaseVoidBodySchema = voidRequestSchema
+
+// ---------- Precios de insumos (flag `purchases.prices`)
+
+/** GET /api/purchase-prices?days=90 — lo que antes armaba el front (`inputPrices`). */
+export const purchasePricesBffQuerySchema = z.object({
+	days: z.coerce.number().int().min(1).max(730).default(90)
+})
+export type PurchasePricesBffQuery = z.output<
+	typeof purchasePricesBffQuerySchema
+>
+export const purchasePricesBffResponseSchema = purchasePricesResponseSchema
 
 // ---------- Facturas de compra (flag `purchases.invoices`)
 
