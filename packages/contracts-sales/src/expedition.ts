@@ -94,7 +94,12 @@ export const expeditionResponseSchema = z.object({
 
 // ---------- Remitos
 
-export const DELIVERY_NOTE_STATUSES = ['to_invoice', 'invoiced'] as const
+/** `cancelled`: anulado (sólo si no se facturó nada); lo remitido vuelve al pedido. */
+export const DELIVERY_NOTE_STATUSES = [
+	'to_invoice',
+	'invoiced',
+	'cancelled'
+] as const
 export const deliveryNoteStatusSchema = z.enum(DELIVERY_NOTE_STATUSES)
 
 export const deliveryNoteLineSchema = z.object({
@@ -155,6 +160,37 @@ export const listDeliveryNotesResponseSchema = z.object({
 /** GET /internal/delivery-notes/:number — `sales.delivery_note_not_found`. */
 export const deliveryNoteResponseSchema = z.object({
 	deliveryNote: deliveryNoteSchema
+})
+
+/**
+ * POST /internal/delivery-notes — un remito a mano, sin pasar por
+ * Expedición (Aires: «Agregar»). Sin hoja de ruta. Mismas reglas que
+ * «Generar remitos»: el pedido tiene que estar autorizado
+ * (`sales.order_not_dispatchable`) y salir algo (`sales.nothing_to_dispatch`).
+ */
+export const createDeliveryNoteRequestSchema = z.object({
+	orderId: salesIdSchema,
+	date: isoDateSchema,
+	carrierId: contactIdSchema.nullable().default(null),
+	vehiclePlate: z.string().trim().max(20).nullable().default(null),
+	lines: z
+		.array(z.object({ lineId: salesIdSchema, quantity: z.number().min(0) }))
+		.min(1)
+		.max(500),
+	/** Las presentaciones que viajan en bandeja (para contar bandejas). */
+	trayPresentationIds: z.array(z.string()).max(200).default([])
+})
+export type CreateDeliveryNoteRequest = z.input<
+	typeof createDeliveryNoteRequestSchema
+>
+
+/**
+ * POST /internal/delivery-notes/:number/void — anula un remito sin nada
+ * facturado ni devuelto (`sales.delivery_note_not_voidable`). Lo remitido
+ * vuelve al pedido y las bandejas dejan de contar.
+ */
+export const voidDeliveryNoteRequestSchema = z.object({
+	reason: z.string().trim().min(1).max(500)
 })
 
 /** GET /internal/delivery-notes/issuer — los datos de la central (Anexo V RG 1415). */

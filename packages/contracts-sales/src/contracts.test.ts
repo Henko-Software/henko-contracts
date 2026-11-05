@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+	createDeliveryNoteRequestSchema,
+	createReturnRequestSchema,
+	customerBillingSchema,
 	invoiceAuthorizationRequestedEventSchema,
 	listOrdersQuerySchema,
+	markSentRequestSchema,
 	orderInputSchema,
 	recordAuthorizationRequestSchema
 } from './index.js'
@@ -96,5 +100,60 @@ describe('contrato de sales', () => {
 			}
 		})
 		expect(parsed.voucher.bonusPct).toBe(0)
+	})
+
+	it('las cuotas de la condición de pago son opcionales', () => {
+		const billing = {
+			customerId: ID,
+			receiver: { vatCondition: 'RI', docType: null, docNumber: '20' },
+			priceListId: 'pl-1',
+			paymentTermDays: 60
+		}
+		expect(customerBillingSchema.safeParse(billing).success).toBe(true)
+		expect(
+			customerBillingSchema.safeParse({
+				...billing,
+				installments: [
+					{ percent: 50, days: 30 },
+					{ percent: 50, days: 60 }
+				]
+			}).success
+		).toBe(true)
+	})
+
+	it('marcar enviadas sin clientes es para WhatsApp', () => {
+		expect(
+			markSentRequestSchema.parse({ ids: [ID], channel: 'whatsapp' }).parties
+		).toEqual([])
+	})
+
+	it('el remito a mano no pide transportista', () => {
+		const parsed = createDeliveryNoteRequestSchema.parse({
+			orderId: ID,
+			date: '2026-11-05',
+			lines: [{ lineId: ID, quantity: 2 }]
+		})
+		expect(parsed.carrierId).toBeNull()
+		expect(parsed.trayPresentationIds).toEqual([])
+	})
+
+	it('una devolución lleva al menos una línea', () => {
+		const input = {
+			orderId: ID,
+			date: '2026-11-05',
+			reason: 'breakage',
+			destination: 'destroyed',
+			photoUrl: null,
+			notes: null
+		}
+		expect(
+			createReturnRequestSchema.safeParse({ ...input, lines: [] }).success
+		).toBe(false)
+		expect(
+			createReturnRequestSchema.safeParse({
+				...input,
+				lines: [{ orderLineId: ID, quantity: 1 }]
+			}).success
+		).toBe(true)
 	})
 })

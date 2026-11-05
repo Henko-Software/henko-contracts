@@ -19,7 +19,10 @@ export const SALES_EVENTS = {
 	invoiceAuthorized: 'sales.invoice.authorized.v1',
 	invoiceRejected: 'sales.invoice.rejected.v1',
 	documentIssued: 'sales.document.issued.v1',
-	documentVoided: 'sales.document.voided.v1'
+	documentVoided: 'sales.document.voided.v1',
+	deliveryNoteCreated: 'sales.delivery_note.created.v1',
+	deliveryNoteVoided: 'sales.delivery_note.voided.v1',
+	returnCreated: 'sales.return.created.v1'
 } as const
 
 /** Lo que viaja de un pedido: sin líneas ni importes. */
@@ -71,5 +74,31 @@ export const invoiceEventSchema = z.object({
 		localId: z.string().nullable(),
 		total: z.number().int(),
 		authorization: z.enum(['pending', 'authorized', 'contingency', 'rejected'])
+	})
+})
+
+/** `sales.delivery_note.created.v1` (a mano) · `sales.delivery_note.voided.v1` */
+export const deliveryNoteEventSchema = z.object({
+	deliveryNote: z.object({
+		id: salesIdSchema,
+		number: z.string(),
+		orderId: salesIdSchema,
+		customerId: z.uuid(),
+		localId: z.string().nullable(),
+		status: z.enum(['to_invoice', 'invoiced', 'cancelled'])
+	})
+})
+
+/** `sales.return.created.v1` — sin líneas: las notas de crédito salen aparte. */
+export const returnEventSchema = z.object({
+	return: z.object({
+		id: salesIdSchema,
+		code: z.string(),
+		orderId: salesIdSchema,
+		customerId: z.uuid(),
+		localId: z.string().nullable(),
+		reason: z.string(),
+		destination: z.string(),
+		creditNoteIds: z.array(salesIdSchema)
 	})
 })

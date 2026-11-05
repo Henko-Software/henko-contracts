@@ -90,7 +90,16 @@ export const invoiceSchema = z.object({
 	/** `null` mientras no tiene autorización (lo da fiscal). */
 	number: documentNumberSchema.nullable(),
 	date: isoDateSchema,
+	/** El último vencimiento. */
 	dueDate: isoDateSchema,
+	/**
+	 * Una cuota por plazo de la condición de pago (30/60 → dos), con su
+	 * importe en centavos; suman el total. Las facturas viejas no la tienen:
+	 * una sola cuota (`dueDate`, total).
+	 */
+	installments: z
+		.array(z.object({ dueDate: isoDateSchema, amount: z.number().int() }))
+		.optional(),
 	customerId: contactIdSchema,
 	deliveryPlaceId: z.string().nullable(),
 	zone: z.string().nullable(),
@@ -197,6 +206,19 @@ export const customerBillingSchema = z.object({
 	priceListId: z.string().min(1).max(60),
 	/** Días hasta el vencimiento (el último de su condición de pago). */
 	paymentTermDays: z.number().int().min(0).max(365),
+	/**
+	 * Las cuotas de su condición de pago (contacts): una cuota de la factura
+	 * por cada una. Sin esto, una sola a `paymentTermDays`.
+	 */
+	installments: z
+		.array(
+			z.object({
+				percent: z.number().positive().max(100),
+				days: z.number().int().min(0).max(365)
+			})
+		)
+		.max(24)
+		.optional(),
 	/** Bonificaciones por escala activas que lo incluyen (catalog). */
 	discountScales: z.array(discountScaleSchema).default([])
 })
@@ -228,10 +250,33 @@ export const creditNoteRequestSchema = z.object({
 })
 export type CreditNoteRequest = z.input<typeof creditNoteRequestSchema>
 
-/** POST /internal/invoices/sent — 204. Con `email`, sólo se anota (falta el envío). */
+/** El cliente como sale en el papel (lo trae quien llama, de contacts). */
+export const invoicePartySchema = z.object({
+	customerId: contactIdSchema,
+	name: z.string().trim().min(1).max(200),
+	address: z.string().max(300).nullable(),
+	/** Mail de facturación: a dónde va el PDF con `channel: email`. */
+	email: z.email().nullable()
+})
+export type InvoiceParty = z.infer<typeof invoicePartySchema>
+
+/**
+ * POST /internal/invoices/sent — 204. Con `email`, sales manda el PDF al
+ * mail de facturación de cada cliente (`parties`) y lo anota; un cliente sin
+ * mail es `sales.no_billing_email`. Con `whatsapp`, sólo lo anota.
+ */
 export const markSentRequestSchema = z.object({
 	ids: z.array(salesIdSchema).min(1).max(500),
-	channel: z.enum(['email', 'whatsapp'])
+	channel: z.enum(['email', 'whatsapp']),
+	parties: z.array(invoicePartySchema).max(500).default([])
+})
+
+/**
+ * POST /internal/invoices/:id/pdf — el PDF de la factura (`application/pdf`),
+ * el mismo que sale por mail. `party`: el cliente como va en el papel.
+ */
+export const invoicePdfRequestSchema = z.object({
+	party: invoicePartySchema
 })
 
 /**
