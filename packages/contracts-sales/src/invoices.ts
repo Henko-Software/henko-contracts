@@ -70,7 +70,9 @@ export const invoiceLineSchema = z.object({
 	unitNetPrice: z.number().min(0),
 	discountPct: z.number().min(0).max(100),
 	vatRate: vatRateSchema,
-	sourceLineId: salesIdSchema.nullable()
+	sourceLineId: salesIdSchema.nullable(),
+	/** El rubro del artículo al facturar (catalog), para «ventas por rubro». */
+	category: z.string().max(60).nullable().optional()
 })
 export type InvoiceLine = z.infer<typeof invoiceLineSchema>
 
@@ -234,7 +236,9 @@ export type CustomerBilling = z.input<typeof customerBillingSchema>
 export const invoiceOrdersRequestSchema = z.object({
 	orderIds: z.array(salesIdSchema).min(1).max(200),
 	date: isoDateSchema,
-	customers: z.array(customerBillingSchema).min(1).max(200)
+	customers: z.array(customerBillingSchema).min(1).max(200),
+	/** El rubro de cada artículo (catalog, `category`), por id de artículo. */
+	articleCategories: z.record(z.string(), z.string().max(60)).default({})
 })
 export type InvoiceOrdersRequest = z.input<typeof invoiceOrdersRequestSchema>
 
