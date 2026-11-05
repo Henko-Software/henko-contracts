@@ -25,6 +25,8 @@ export const LEDGER_ERRORS = [
 	/** Un comprobante de otro módulo se anula desde su módulo. */
 	'ledger.not_manual',
 	/** Un tipo de comprobante que no va de ese lado (recibo a un proveedor). */
-	'ledger.wrong_party'
+	'ledger.wrong_party',
+	/** Cuotas que no suman el importe o cuya última no vence en `dueDate`. */
+	'ledger.invalid_installments'
 ] as const
 export type LedgerErrorKey = (typeof LEDGER_ERRORS)[number]

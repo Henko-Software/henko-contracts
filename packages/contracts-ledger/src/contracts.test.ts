@@ -5,6 +5,7 @@ import {
 	createChartAccountRequestSchema,
 	LEDGER_INBOUND_EVENTS,
 	listAccountsQuerySchema,
+	listCompaniesResponseSchema,
 	salesDocumentIssuedEventSchema,
 	treasuryReceiptIssuedEventSchema
 } from './index.js'
@@ -89,5 +90,60 @@ describe('contrato de ledger', () => {
 		expect(LEDGER_INBOUND_EVENTS['treasury.receipt.issued.v1'].party).toBe(
 			'customer'
 		)
+	})
+
+	it('un comprobante sin cuotas tiene una sola; con cuotas, cada una en centavos', () => {
+		const document = {
+			id: 'F-1',
+			kind: 'invoice',
+			contactId,
+			companyId: null,
+			letter: 'A',
+			number: '0002-00000001',
+			date: '2026-11-01',
+			dueDate: '2026-12-31',
+			description: null,
+			currency: 'ARS',
+			exchangeRate: 1,
+			originalAmount: 10_000,
+			amount: 10_000
+		}
+		const single = salesDocumentIssuedEventSchema.parse({ document })
+		expect(single.document.installments).toEqual([])
+		const split = salesDocumentIssuedEventSchema.parse({
+			document: {
+				...document,
+				installments: [
+					{ dueDate: '2026-12-01', amount: 5_000 },
+					{ dueDate: '2026-12-31', amount: 5_000 }
+				],
+				categories: [
+					{ category: 'pizzas', amount: 6_000 },
+					{ category: 'pizzas', amount: 4_000 }
+				]
+			}
+		})
+		expect(split.document.installments).toHaveLength(2)
+		expect(
+			salesDocumentIssuedEventSchema.safeParse({
+				document: {
+					...document,
+					installments: [{ dueDate: '2026-12-01', amount: 0 }]
+				}
+			}).success
+		).toBe(false)
+	})
+
+	it('la instancia tiene al menos una empresa', () => {
+		expect(
+			listCompaniesResponseSchema.safeParse({ companies: [] }).success
+		).toBe(false)
+		expect(
+			listCompaniesResponseSchema.parse({
+				companies: [
+					{ id: 'big_pizza', code: '1', name: 'Big Pizza', isDefault: true }
+				]
+			}).companies
+		).toHaveLength(1)
 	})
 })

@@ -31,6 +31,18 @@ import {
  * de `contacts`. Fuera de alcance = 404.
  */
 
+/**
+ * Una cuota de un comprobante: cuándo vence y cuánto (en pesos). Una factura
+ * con condición 30/60 días tiene dos (decisión asumida 13: una cuota por
+ * plazo de la condición de pago). Lo cobrado cancela primero la cuota que
+ * vence antes.
+ */
+export const installmentSchema = z.object({
+	dueDate: isoDateSchema,
+	amount: positiveCentsSchema
+})
+export type Installment = z.infer<typeof installmentSchema>
+
 /** Una imputación vista desde un movimiento: el otro comprobante y cuánto. */
 export const movementApplicationSchema = z.object({
 	/** La última imputación entre los dos (para deshacer, se usa el par). */
@@ -52,7 +64,10 @@ export const movementSchema = z.object({
 	letter: letterSchema.nullable(),
 	number: documentNumberSchema,
 	date: isoDateSchema,
+	/** El último vencimiento (con cuotas, el de la última). */
 	dueDate: isoDateSchema.nullable(),
+	/** Las cuotas, de la primera a la última; vacío = una sola, `dueDate`. */
+	installments: z.array(installmentSchema),
 	description: z.string().max(120).nullable(),
 	companyId: companyIdSchema.nullable(),
 	currency: currencySchema,
@@ -158,7 +173,8 @@ export const accountDetailResponseSchema = z.object({
 })
 
 /**
- * Lo que queda de una factura o nota de débito sin cancelar. Con `net=true`
+ * Lo que queda de una factura o nota de débito sin cancelar, una fila por
+ * cuota abierta (mismo `movementId`). Con `net=true`
  * se descuenta antes lo no imputado de la cuenta, de lo que vence primero
  * (como `openInvoicesOf` del front: cobranzas esperadas); sin `net`, cada
  * comprobante con lo suyo (agenda de pagos a proveedores).
@@ -171,7 +187,10 @@ export const openItemSchema = z.object({
 	number: documentNumberSchema,
 	description: z.string().max(120).nullable(),
 	date: isoDateSchema,
+	/** El vencimiento de esta cuota (o del comprobante, si es una sola). */
 	dueDate: isoDateSchema.nullable(),
+	/** Qué cuota es (1, 2…); `null` si el comprobante tiene una sola. */
+	installment: z.number().int().min(1).nullable().default(null),
 	companyId: companyIdSchema.nullable(),
 	currency: currencySchema,
 	exchangeRate: z.number().positive(),
@@ -308,7 +327,14 @@ export const ledgerDocumentSchema = z.object({
 	letter: letterSchema.nullable(),
 	number: documentNumberSchema,
 	date: isoDateSchema,
+	/** El último vencimiento (con cuotas, el de la última). */
 	dueDate: isoDateSchema.nullable(),
+	/**
+	 * Las cuotas, de la primera a la última. La suma tiene que dar `amount` y
+	 * la última vencer en `dueDate`. Vacío o ausente = una sola cuota
+	 * (`dueDate` por `amount`).
+	 */
+	installments: z.array(installmentSchema).max(60).default([]),
 	description: z.string().max(120).nullable(),
 	currency: currencySchema,
 	exchangeRate: z.number().positive(),
@@ -316,7 +342,11 @@ export const ledgerDocumentSchema = z.object({
 	/** En pesos. */
 	amount: positiveCentsSchema,
 	salespersonId: z.uuid().nullable().default(null),
-	categories: z.array(categoryAmountSchema).default([]),
+	/**
+	 * Lo de cada rubro de artículo, en pesos y en positivo. Puede venir una
+	 * entrada por línea (el mismo rubro repetido): `ledger` las suma.
+	 */
+	categories: z.array(categoryAmountSchema).max(500).default([]),
 	applications: z.array(documentApplicationSchema).default([])
 })
 export type LedgerDocument = z.output<typeof ledgerDocumentSchema>
@@ -345,3 +375,24 @@ export const voidDocumentCommandSchema = z.object({
 	reason: z.string().trim().min(1).max(120).nullable().default(null)
 })
 export type VoidDocumentCommand = z.output<typeof voidDocumentCommandSchema>
+
+// ---------- Empresas (razones sociales de la casa central)
+
+/**
+ * Una razón social de la casa central (Aires: «Empresa»). La lista es de
+ * cada instancia (configuración de `ledger`, decisión asumida 7); la que
+ * tiene `isDefault` es la que se usa cuando un comprobante no dice cuál.
+ */
+export const companySchema = z.object({
+	id: companyIdSchema,
+	/** El número de empresa de Aires (`1`, `2`). */
+	code: z.string().trim().min(1).max(10),
+	name: z.string().trim().min(1).max(120),
+	isDefault: z.boolean()
+})
+export type Company = z.infer<typeof companySchema>
+
+/** GET /internal/companies — las de la instancia, la de por defecto primero. */
+export const listCompaniesResponseSchema = z.object({
+	companies: z.array(companySchema).min(1)
+})
