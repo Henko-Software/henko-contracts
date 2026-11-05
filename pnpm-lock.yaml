@@ -71,6 +71,9 @@ importers:
       '@henko-software/contracts-sales':
         specifier: workspace:^
         version: link:../contracts-sales
+      '@henko-software/contracts-treasury':
+        specifier: workspace:^
+        version: link:../contracts-treasury
       zod:
         specifier: ^4.1.0
         version: 4.6.7

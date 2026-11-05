@@ -23,6 +23,7 @@ export * from './admin/index.js'
 export * from './purchasing.js'
 export * from './sales.js'
 export * from './salesReports.js'
+export * from './treasury.js'
 
 /**
  * Contrato de la API pública de `henko-bff` (la que usa `henko-web`). La
@@ -151,7 +152,9 @@ export const BFF_ERRORS = [
 	/** El BFF no tiene `SALES_URL`: Ventas no está configurado. */
 	'bff.sales_unavailable',
 	/** El BFF no tiene `PURCHASING_URL`: Compras no está configurado. */
-	'bff.purchasing_unavailable'
+	'bff.purchasing_unavailable',
+	/** El BFF no tiene `TREASURY_URL`: Tesorería no está configurada. */
+	'bff.treasury_unavailable'
 ] as const
 export type BffErrorKey = (typeof BFF_ERRORS)[number]
 
