@@ -23,6 +23,7 @@ export * from './admin/index.js'
 export * from './purchasing.js'
 export * from './sales.js'
 export * from './salesReports.js'
+export * from './salesReturns.js'
 export * from './treasury.js'
 
 /**

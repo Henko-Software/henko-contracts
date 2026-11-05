@@ -315,15 +315,21 @@ export const deliveryNoteIssuerBffResponseSchema = z.object({
 
 /**
  * La factura como la usa el front. Sin CAE todavía (`authorization.status`
- * `pending`), `number` viene con el punto de venta y ceros
- * (`0002-00000000`): el número lo da ARCA al autorizar.
+ * `pending`), `number` es `null` (decisión 14): el número lo da ARCA al
+ * autorizar.
  */
 export const bffInvoiceSchema = z.object({
 	id: z.string(),
 	kind: z.enum(INVOICE_KINDS),
 	letter: z.enum(INVOICE_LETTERS),
-	number: documentNumberSchema,
+	number: documentNumberSchema.nullable(),
 	date: isoDateSchema,
+	/** El último vencimiento. */
+	dueDate: isoDateSchema.optional(),
+	/** Una cuota por plazo de la condición de pago (decisión 13). */
+	installments: z
+		.array(z.object({ dueDate: isoDateSchema, amount: z.number().int() }))
+		.optional(),
 	customerId: z.string(),
 	deliveryPlaceId: z.string().nullable(),
 	receiver: z.object({
@@ -421,3 +427,20 @@ export const markSentBodySchema = z.object({
 	channel: z.enum(['email', 'whatsapp'])
 })
 // POST /api/invoices/:id/retry-cae → `invoiceBffResponseSchema`.
+// GET /api/invoices/:id/pdf → `application/pdf` (el mismo que va por mail).
+
+/** POST /api/delivery-notes — remito a mano, sin Expedición (flag `orders.deliveryNotes`). */
+export const createDeliveryNoteBodySchema = z.object({
+	orderId: z.uuid(),
+	date: isoDateSchema,
+	carrierId: z.uuid().nullable().default(null),
+	vehiclePlate: z.string().trim().max(20).nullable().default(null),
+	lines: z
+		.array(z.object({ lineId: z.uuid(), quantity: z.number().min(0) }))
+		.min(1)
+		.max(500)
+})
+/** POST /api/delivery-notes/:number/void — sólo sin nada facturado ni devuelto. */
+export const voidDeliveryNoteBodySchema = z.object({
+	reason: z.string().trim().min(1).max(500)
+})
