@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-people",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Contrato del módulo people: empleados (ficha, lugar de trabajo, egreso, papeles con vencimiento), ausencias con saldo de vacaciones, la Semana y los avisos.",
 	"license": "UNLICENSED",
 	"type": "module",

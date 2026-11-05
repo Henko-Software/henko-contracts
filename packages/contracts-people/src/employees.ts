@@ -226,6 +226,15 @@ export const employeeDetailResponseSchema = z.object({
 	history: z.array(historyEntrySchema)
 })
 
+/**
+ * GET /internal/employees/:id/reads: quién consultó la ficha o las fotos
+ * (auditoría de lectura). Las lecturas de un superadmin sólo las ve un
+ * superadmin.
+ */
+export const employeeReadsResponseSchema = z.object({
+	reads: z.array(historyEntrySchema)
+})
+
 /** POST /internal/employees: con `id` repetido no se duplica. */
 export const createEmployeeRequestSchema = z.object({
 	id: peopleIdSchema.optional(),
