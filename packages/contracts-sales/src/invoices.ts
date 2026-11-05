@@ -272,7 +272,9 @@ export type InvoiceParty = z.infer<typeof invoicePartySchema>
 export const markSentRequestSchema = z.object({
 	ids: z.array(salesIdSchema).min(1).max(500),
 	channel: z.enum(['email', 'whatsapp']),
-	parties: z.array(invoicePartySchema).max(500).default([])
+	parties: z.array(invoicePartySchema).max(500).default([]),
+	/** El nombre de cada artículo por id, para el detalle del PDF. */
+	articles: z.record(z.string(), z.string().max(200)).default({})
 })
 
 /**
@@ -280,7 +282,9 @@ export const markSentRequestSchema = z.object({
  * el mismo que sale por mail. `party`: el cliente como va en el papel.
  */
 export const invoicePdfRequestSchema = z.object({
-	party: invoicePartySchema
+	party: invoicePartySchema,
+	/** El nombre de cada artículo por id (catalog); si falta, sale el id. */
+	articles: z.record(z.string(), z.string().max(200)).default({})
 })
 
 /**
