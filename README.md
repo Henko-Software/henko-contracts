@@ -16,6 +16,7 @@ depende sólo de los contratos que usa.
 | `@henko-software/contracts-catalog`      | API interna de `catalog`: artículos, agrupamientos, listas de precios, precios con vigencia (cadena, aumento masivo, deshacer), bonificaciones por escala, el precio que rige para una venta (`/internal/prices/resolve`), errores y eventos |
 | `@henko-software/contracts-ledger`       | API interna de `ledger`: cuenta corriente de clientes y proveedores (movimientos, imputaciones, saldo, antigüedad, vencimientos, ventas por vendedor), plan de cuentas, comandos y eventos que consume y publica, errores                    |
 | `@henko-software/contracts-sales`        | API interna de `sales`: pedidos (autorización, sugerido, último), zonas de reparto, expedición (hojas de ruta, remitos), bandejas, facturas y notas de crédito con su autorización (CAE/CAEA por el orquestador), errores y eventos          |
+| `@henko-software/contracts-treasury`     | API interna de `treasury`: recibos, órdenes de pago, cartera de cheques (depósito, acreditación, endoso, rechazo), cuentas bancarias con saldos, extractos y conciliación, caja proyectada, errores y eventos                                |
 | `@henko-software/contracts-orchestrator` | API interna del orquestador (flujos, pasos, intentos, arranque idempotente por `commandId`, cancelación), cabecera de idempotencia de los comandos a módulos, errores y eventos                                                              |
 
 ## Reglas
