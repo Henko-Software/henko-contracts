@@ -7,7 +7,7 @@ import {
 	productionArticleSchema
 } from './common.js'
 import { productionOrderSchema } from './orders.js'
-import { incomingSchema } from './stock.js'
+import { incomingLineSchema } from './stock.js'
 
 /**
  * El plan de producción de una entrega. Copia `buildPlan` de
@@ -39,7 +39,7 @@ export const planRequestSchema = z.object({
 	inStock: z
 		.array(z.object({ articleId: articleIdSchema, quantity: z.number() }))
 		.max(5000),
-	incoming: z.array(incomingSchema).max(5000)
+	incoming: z.array(incomingLineSchema).max(5000)
 })
 export type PlanRequest = z.input<typeof planRequestSchema>
 
@@ -73,7 +73,7 @@ export const shortageSchema = z.object({
 	inStock: z.number(),
 	missing: z.number(),
 	/** Lo pedido a proveedores que todavía no llegó, del primero al último. */
-	incoming: z.array(incomingSchema.omit({ articleId: true })),
+	incoming: z.array(incomingLineSchema.omit({ articleId: true })),
 	/** Con lo que llega hasta la entrega, alcanza. */
 	covered: z.boolean()
 })

@@ -9,7 +9,6 @@ import {
 
 const ARTICLE = '0192b0a1-7c00-7000-8000-0000000000a1'
 const ORDER = '0192b0a1-7c00-7000-8000-0000000000b1'
-const MOVE = '0192b0a1-7c00-7000-8000-0000000000c1'
 
 describe('contrato de production', () => {
 	it('un retiro pide el motivo; un simulacro no', () => {
@@ -43,24 +42,22 @@ describe('contrato de production', () => {
 			lot: '05-11-26',
 			expiry: '2026-12-05'
 		}
-		expect(orderClosedEventSchema.safeParse({ order, moves: [] }).success).toBe(
-			false
-		)
+		expect(
+			orderClosedEventSchema.safeParse({ order, date: '2026-11-05', moves: [] })
+				.success
+		).toBe(false)
 		expect(
 			orderClosedEventSchema.safeParse({
 				order,
+				date: '2026-11-05',
 				moves: [
 					{
-						id: MOVE,
-						date: '2026-11-05',
 						kind: 'production',
 						articleId: ARTICLE,
 						locationId: 'ub-n-cong',
 						lot: '05-11-26',
 						expiry: '2026-12-05',
-						quantity: 10,
-						note: null,
-						ref: { kind: 'productionOrder', id: ORDER, number: '009301' }
+						quantity: 10
 					}
 				]
 			}).success

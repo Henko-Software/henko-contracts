@@ -7,7 +7,10 @@ import {
 	refIdSchema,
 	STOCK_UNITS
 } from './common.js'
-import { movementRefSchema, traceMovementSchema } from './stock.js'
+import {
+	stockRefSchema as movementRefSchema,
+	traceMovementSchema
+} from './stock.js'
 
 /**
  * Trazabilidad de un lote (Aires: Trazabilidad, vacía). Copia

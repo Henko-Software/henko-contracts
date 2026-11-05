@@ -13,7 +13,7 @@ import {
 	productionIdSchema,
 	refIdSchema
 } from './common.js'
-import { lotBalanceSchema, stockLocationSchema } from './stock.js'
+import { stockLocationSchema, stockLotSchema } from './stock.js'
 
 /**
  * Órdenes de producción (Aires: Órdenes de producción, «Procesar» y
@@ -131,6 +131,6 @@ export const closeOrderRequestSchema = z.object({
 	inputs: z.array(productionInputSchema).max(200),
 	article: productionArticleSchema,
 	locations: z.array(stockLocationSchema).max(500),
-	lots: z.array(lotBalanceSchema).max(5000)
+	lots: z.array(stockLotSchema).max(5000)
 })
 export type CloseOrderRequest = z.input<typeof closeOrderRequestSchema>

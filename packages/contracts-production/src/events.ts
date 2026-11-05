@@ -7,12 +7,14 @@ import {
 	productionIdSchema
 } from './common.js'
 import { recallKindSchema } from './recalls.js'
-import { stockMoveSchema } from './stock.js'
+import { holdTransferSchema, productionMoveSchema } from './stock.js'
 
 /**
  * Eventos de production (stream `PRODUCTION`, por el outbox, con el id en
- * `Nats-Msg-Id`). Lo que mueve el stock viaja en `moves` y lo anota stock
- * (por el orquestador), idempotente por el id de cada movimiento.
+ * `Nats-Msg-Id`). Lo que mueve el stock viaja en el evento y lo anota stock
+ * por el orquestador: el cierre de una orden con
+ * `POST /internal/production-postings` (id de la operación = id de la
+ * orden) y lo retenido por un retiro con `POST /internal/transfers`.
  */
 export const PRODUCTION_EVENTS = {
 	ordersCreated: 'production.orders.created.v1',
@@ -46,14 +48,16 @@ export const orderClosedEventSchema = z.object({
 		lot: lotSchema,
 		expiry: isoDateSchema.nullable()
 	}),
-	moves: z.array(stockMoveSchema).min(1)
+	/** El día de elaboración (hora de Argentina): la fecha de los movimientos. */
+	date: isoDateSchema,
+	moves: z.array(productionMoveSchema).min(1)
 })
 export type OrderClosedEvent = z.infer<typeof orderClosedEventSchema>
 
 /**
  * `production.recall.started.v1`: en un retiro, lo que queda en planta pasa
- * a la ubicación `hold` (pares de `transfer` con `ref: { kind: 'recall' }`);
- * en un simulacro, `moves` va vacío.
+ * a la ubicación `hold` (una transferencia por lote y ubicación); en un simulacro,
+ * `transfers` va vacío.
  */
 export const recallStartedEventSchema = z.object({
 	recall: z.object({
@@ -63,7 +67,8 @@ export const recallStartedEventSchema = z.object({
 		articleId: articleIdSchema,
 		lot: lotSchema
 	}),
-	moves: z.array(stockMoveSchema)
+	date: isoDateSchema,
+	transfers: z.array(holdTransferSchema)
 })
 export type RecallStartedEvent = z.infer<typeof recallStartedEventSchema>
 

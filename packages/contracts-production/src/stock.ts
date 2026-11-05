@@ -1,129 +1,89 @@
 import { z } from 'zod'
 
 import {
-	articleIdSchema,
-	isoDateSchema,
-	lotSchema,
-	quantitySchema,
-	refIdSchema
-} from './common.js'
+	incomingSchema,
+	locationSchema,
+	lotBalanceSchema,
+	movementRefSchema,
+	stockMovementSchema
+} from '@henko-software/contracts-stock'
+
+import { articleIdSchema, isoDateSchema, lotSchema } from './common.js'
 
 /**
- * Lo que production lee del stock (`stock`), con la forma de
- * `henko-web/apps/web/src/data/stock/schema.ts`. Production no guarda stock:
- * lo trae quien llama (el BFF, de stock) y lo que production mueve sale por
- * evento (`production.order.closed.v1`, `production.recall.started.v1`) y
- * lo anota stock.
+ * Lo que production lee del stock, con las formas de
+ * `@henko-software/contracts-stock` (no se duplica nada de stock).
+ * Production no guarda stock: lo trae quien llama (el BFF, de stock) y lo
+ * que production mueve sale por evento (`production.order.closed.v1`,
+ * `production.recall.started.v1`) y lo anota stock por el orquestador
+ * (`POST /internal/production-postings` y `POST /internal/transfers`).
  */
 
-/** Qué es cada ubicación. `hold`: lo retenido por un retiro (no disponible). */
-export const LOCATION_KINDS = [
-	'frozen',
-	'chilled',
-	'raw',
-	'dry',
-	'kitchen',
-	'expedition',
-	'waste',
-	'hold'
-] as const
-export const locationKindSchema = z.enum(LOCATION_KINDS)
-
-/** Una ubicación física (Aires: «U.F.»): una cámara o un depósito de una sede. */
-export const stockLocationSchema = z.object({
-	id: refIdSchema,
-	site: z.string().max(120),
-	name: z.string().max(120),
-	kind: locationKindSchema
+/** Una ubicación de stock: production mira su `kind` (lo producido, lo retenido). */
+export const stockLocationSchema = locationSchema.pick({
+	id: true,
+	site: true,
+	name: true,
+	kind: true
 })
 export type StockLocation = z.infer<typeof stockLocationSchema>
 
-/** Lo que hay de un lote de un artículo en una ubicación. */
-export const lotBalanceSchema = z.object({
-	articleId: articleIdSchema,
-	locationId: refIdSchema,
-	/** `null`: salió más de lo que había con lote (queda en negativo). */
-	lot: lotSchema.nullable(),
-	expiry: isoDateSchema.nullable(),
-	quantity: quantitySchema
-})
-export type LotBalance = z.infer<typeof lotBalanceSchema>
+/** Lo que hay de un lote de un artículo en una ubicación (`GET /internal/lots`). */
+export const stockLotSchema = lotBalanceSchema
+export type StockLot = z.infer<typeof stockLotSchema>
 
-export const MOVEMENT_KINDS = [
-	'opening',
-	'reception',
-	'production',
-	'consumption',
-	'dispatch',
-	'transfer',
-	'adjustment',
-	'return'
-] as const
-export const movementKindSchema = z.enum(MOVEMENT_KINDS)
-export type MovementKind = z.infer<typeof movementKindSchema>
-
-export const MOVEMENT_REF_KINDS = [
-	'reception',
-	'deliveryNote',
-	'productionOrder',
-	'count',
-	'recall',
-	'return',
-	'transfer'
-] as const
-
-/** El comprobante que originó el movimiento. */
-export const movementRefSchema = z.object({
-	kind: z.enum(MOVEMENT_REF_KINDS),
-	id: refIdSchema,
-	/** Para mostrarlo sin buscarlo: «000412», «0001-00102797». */
-	number: z.string().max(40)
-})
-export type MovementRef = z.infer<typeof movementRefSchema>
+/** El comprobante que originó un movimiento de stock. */
+export const stockRefSchema = movementRefSchema
+export type StockRef = z.infer<typeof stockRefSchema>
 
 /**
- * Un movimiento de stock, como lo mira la trazabilidad. Positivo entra,
- * negativo sale; una salida sin lote se parte en los lotes que vencen
- * primero (FEFO).
+ * Un movimiento de stock como lo mira la trazabilidad (`GET
+ * /internal/movements`; lo demás se descarta). Positivo entra, negativo
+ * sale; una salida sin lote se parte en los lotes que vencen primero.
  */
-export const traceMovementSchema = z.object({
-	id: refIdSchema,
-	date: isoDateSchema,
-	kind: movementKindSchema,
-	articleId: articleIdSchema,
-	locationId: refIdSchema,
-	lot: lotSchema.nullable(),
-	expiry: isoDateSchema.nullable(),
-	quantity: quantitySchema,
-	ref: movementRefSchema.nullable()
+export const traceMovementSchema = stockMovementSchema.pick({
+	id: true,
+	date: true,
+	kind: true,
+	articleId: true,
+	locationId: true,
+	lot: true,
+	expiry: true,
+	quantity: true,
+	ref: true
 })
 export type TraceMovement = z.infer<typeof traceMovementSchema>
 
-/** Lo que viene en camino: un pedido a un proveedor que todavía no llegó (purchasing). */
-export const incomingSchema = z.object({
-	articleId: articleIdSchema,
-	date: isoDateSchema,
-	quantity: z.number().min(0),
-	purchaseOrderId: refIdSchema,
-	orderNumber: z.string().max(40)
+/** Lo que viene en camino de un artículo: un pedido a un proveedor (purchasing). */
+export const incomingLineSchema = incomingSchema.extend({
+	articleId: articleIdSchema
 })
-export type Incoming = z.infer<typeof incomingSchema>
+export type IncomingLine = z.infer<typeof incomingLineSchema>
 
 /**
- * Lo que production le pide a stock que anote, en una transacción e
- * idempotente por `id` (lo genera production). Viaja en los eventos.
+ * Lo que produjo o usó una orden, para stock. `consumption` con `lot:
+ * null` = del que vence primero en esa ubicación (puede quedar en
+ * negativo). Con `ref: { kind: 'productionOrder' }`.
  */
-export const stockMoveSchema = z.object({
-	id: z.uuid(),
-	date: isoDateSchema,
-	kind: z.enum(['production', 'consumption', 'transfer']),
+export const productionMoveSchema = z.object({
+	kind: z.enum(['production', 'consumption']),
 	articleId: articleIdSchema,
-	locationId: refIdSchema,
-	/** En una salida, `null` = FEFO en esa ubicación (puede quedar en negativo). */
+	locationId: z.string().min(1).max(40),
 	lot: lotSchema.nullable(),
 	expiry: isoDateSchema.nullable(),
-	quantity: quantitySchema,
-	note: z.string().max(200).nullable(),
-	ref: movementRefSchema
+	/** Positivo: siempre la cantidad que entra o sale. */
+	quantity: z.number().positive()
 })
-export type StockMove = z.infer<typeof stockMoveSchema>
+export type ProductionMove = z.infer<typeof productionMoveSchema>
+
+/** Lo que un retiro pasa a la ubicación `hold`: una transferencia por lote y ubicación. */
+export const holdTransferSchema = z.object({
+	/** El id de la operación de stock (idempotente). */
+	id: z.uuid(),
+	articleId: articleIdSchema,
+	lot: lotSchema,
+	fromId: z.string().min(1).max(40),
+	toId: z.string().min(1).max(40),
+	quantity: z.number().positive()
+})
+export type HoldTransfer = z.infer<typeof holdTransferSchema>

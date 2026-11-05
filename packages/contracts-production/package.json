@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-production",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Contrato del módulo production: plan de producción, órdenes con su lote, trazabilidad de lotes, retiros y simulacros.",
 	"license": "UNLICENSED",
 	"type": "module",
@@ -30,6 +30,7 @@
 	"dependencies": {
 		"@henko-software/contracts-catalog": "workspace:^",
 		"@henko-software/contracts-common": "workspace:^",
+		"@henko-software/contracts-stock": "workspace:^",
 		"zod": "^4.1.0"
 	}
 }
