@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+	bffPriceSchema,
 	customerInputSchema,
+	listBffArticlesQuerySchema,
 	listCustomersQuerySchema,
 	listSuppliersQuerySchema,
 	salespersonRefSchema,
@@ -73,5 +75,27 @@ describe('contrato de Administración del BFF', () => {
 				fetchedAt: '2026-11-04T12:00:00.000Z'
 			}).entry?.province
 		).toBeNull()
+	})
+
+	it('catálogo: el autor de un precio llega con nombre y los filtros como lista', () => {
+		const id = '0192b0a1-7c00-7000-8000-0000000000a1'
+		expect(
+			bffPriceSchema.safeParse({
+				id,
+				priceListId: id,
+				target: { kind: 'article', articleId: id },
+				presentationId: null,
+				netPrice: 95041.32,
+				fixedPerUnit: false,
+				unitCost: null,
+				validFrom: '2026-11-01T03:00:00.000Z',
+				validTo: null,
+				updatedAt: '2026-11-01T03:00:00.000Z',
+				updatedBy: 'Ana'
+			}).success
+		).toBe(true)
+		expect(
+			listBffArticlesQuerySchema.parse({ usage: 'sale,purchase' }).usage
+		).toEqual(['sale', 'purchase'])
 	})
 })

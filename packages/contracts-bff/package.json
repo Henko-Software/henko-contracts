@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-bff",
-	"version": "0.5.0",
+	"version": "0.6.0",
 	"description": "Contrato de la API que el front usa (henko-bff).",
 	"license": "UNLICENSED",
 	"type": "module",
@@ -28,6 +28,7 @@
 		"typecheck": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
+		"@henko-software/contracts-catalog": "workspace:^",
 		"@henko-software/contracts-console": "workspace:^",
 		"@henko-software/contracts-contacts": "workspace:^",
 		"@henko-software/contracts-flags": "workspace:^",

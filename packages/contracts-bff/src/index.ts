@@ -141,7 +141,10 @@ export const BFF_ERRORS = [
 	'bff.contacts_unavailable',
 	'bff.fiscal_unavailable',
 	'bff.fiscal_check_not_cuit',
-	'bff.taxpayer_not_found'
+	'bff.taxpayer_not_found',
+	'bff.catalog_unavailable',
+	/** No se da de baja una lista de precios que tienen clientes activos. */
+	'bff.price_list_in_use'
 ] as const
 export type BffErrorKey = (typeof BFF_ERRORS)[number]
 
