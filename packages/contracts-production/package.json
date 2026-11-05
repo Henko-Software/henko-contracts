@@ -1,0 +1,35 @@
+{
+	"name": "@henko-software/contracts-production",
+	"version": "0.1.0",
+	"description": "Contrato del módulo production: plan de producción, órdenes con su lote, trazabilidad de lotes, retiros y simulacros.",
+	"license": "UNLICENSED",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Henko-Software/henko-contracts.git",
+		"directory": "packages/contracts-production"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"henko-source": "./src/index.ts",
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@henko-software/contracts-catalog": "workspace:^",
+		"@henko-software/contracts-common": "workspace:^",
+		"zod": "^4.1.0"
+	}
+}
