@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import {
 	applicationSchema,
+	appliedWithholdingSchema,
 	bankAccountInputSchema,
 	bankBalanceSchema,
 	billCountSchema,
@@ -10,6 +11,7 @@ import {
 	cashEntrySchema,
 	chequeSchema,
 	chequeStatusSchema,
+	currencyFields,
 	currencySchema,
 	documentNumberSchema,
 	entityTypeSchema,
@@ -17,18 +19,24 @@ import {
 	listParam,
 	nextNumberResponseSchema,
 	paymentValueSchema,
+	PESO_ONLY_PAYMENT_KINDS,
+	PESO_ONLY_RECEIPT_KINDS,
 	projectionResponseSchema,
 	RECEIPT_STATES,
 	RECEIPT_VALUE_KINDS,
 	receiptChequeSchema,
 	receiptValueInputSchema,
 	recordStatusSchema,
+	refineCurrency,
 	statementMatchSchema,
 	statementRowSchema,
 	statementStatusSchema,
+	toPesos,
 	voidedSchema,
 	voidRequestSchema,
-	withholdingSchema
+	withholdingDraftSchema,
+	withholdingSchema,
+	withholdingTaxSchema
 } from '@henko-software/contracts-treasury'
 
 import { historyEventSchema } from './admin/common.js'
@@ -66,6 +74,8 @@ export const bffReceiptSchema = z.object({
 	values: z.array(bffReceiptValueSchema).min(1),
 	withholdings: z.array(withholdingSchema),
 	applications: z.array(applicationSchema),
+	/** Moneda de los medios y su cotización (en pesos, `ARS` y 1). */
+	...currencyFields,
 	notes: z.string().max(500).nullable(),
 	/** Nombre de quien lo registró. */
 	createdBy: z.string(),
@@ -74,7 +84,11 @@ export const bffReceiptSchema = z.object({
 })
 export type BffReceipt = z.infer<typeof bffReceiptSchema>
 
-/** POST /api/receipts — `ReceiptInput` del front. `H-RC002` = `treasury.receipt_application_exceeds`. */
+/**
+ * POST /api/receipts — `ReceiptInput` del front. `H-RC002` =
+ * `treasury.receipt_application_exceeds`. En dólares (`currency`,
+ * `exchangeRate`), los medios en dólares y lo aplicado en pesos.
+ */
 export const bffReceiptInputSchema = z
 	.object({
 		customerId: z.uuid(),
@@ -82,12 +96,26 @@ export const bffReceiptInputSchema = z
 		values: z.array(receiptValueInputSchema).min(1).max(50),
 		withholdings: z.array(withholdingSchema).max(20),
 		applications: z.array(applicationSchema).max(200),
+		...currencyFields,
 		notes: z.string().trim().max(500).nullable()
 	})
 	.superRefine((input, ctx) => {
+		refineCurrency(input, ctx)
+		input.values.forEach((value, index) => {
+			if (
+				input.currency !== 'ARS' &&
+				PESO_ONLY_RECEIPT_KINDS.includes(value.kind)
+			)
+				ctx.addIssue({
+					code: 'custom',
+					path: ['values', index, 'kind'],
+					message: 'Cheques, e-cheq y Mercado Pago van sólo en pesos.'
+				})
+		})
 		if (
 			sumOf(input.applications) >
-			sumOf(input.values) + sumOf(input.withholdings)
+			toPesos(sumOf(input.values), input.exchangeRate) +
+				sumOf(input.withholdings)
 		)
 			ctx.addIssue({
 				code: 'custom',
@@ -214,7 +242,12 @@ export const bffPaymentOrderSchema = z.object({
 	date: isoDateSchema,
 	applications: z.array(applicationSchema),
 	values: z.array(bffPaymentValueSchema).min(1),
+	/** Lo que se le retuvo (pesos), con su certificado. */
+	withholdings: z.array(appliedWithholdingSchema).default([]),
+	...currencyFields,
 	notes: z.string().max(500).nullable(),
+	/** En pesos: medios por la cotización más retenciones. */
+	total: z.number().int().positive(),
 	delivered: z.boolean(),
 	deliveredAt: isoDateSchema.nullable(),
 	createdBy: z.string(),
@@ -225,7 +258,10 @@ export type BffPaymentOrder = z.infer<typeof bffPaymentOrderSchema>
 /**
  * POST /api/payment-orders — `PaymentOrderInput` del front: el efectivo va
  * con los billetes. `H-OP002` = `treasury.payment_application_exceeds`;
- * `H-CH002` = `treasury.cheque_not_available`.
+ * `H-CH002` = `treasury.cheque_not_available`. Si Big Pizza es agente de
+ * retención, treasury calcula las retenciones (ver
+ * `/api/payment-orders/withholdings`): lo que se paga más lo retenido tiene
+ * que alcanzar para lo aplicado (`treasury.payment_values_short`).
  */
 export const bffPaymentOrderInputSchema = z
 	.object({
@@ -233,15 +269,24 @@ export const bffPaymentOrderInputSchema = z
 		date: isoDateSchema,
 		applications: z.array(applicationSchema).max(200),
 		values: z.array(paymentValueSchema).min(1).max(50),
+		/** Impuestos que no se le retienen (certificado de exclusión). */
+		withholdingExempt: z.array(withholdingTaxSchema).max(4).default([]),
+		...currencyFields,
 		notes: z.string().trim().max(500).nullable()
 	})
 	.superRefine((input, ctx) => {
-		if (sumOf(input.values) < sumOf(input.applications))
-			ctx.addIssue({
-				code: 'custom',
-				path: ['values'],
-				message: 'Lo que se paga no alcanza para lo que se aplica.'
-			})
+		refineCurrency(input, ctx)
+		input.values.forEach((value, index) => {
+			if (
+				input.currency !== 'ARS' &&
+				PESO_ONLY_PAYMENT_KINDS.includes(value.kind)
+			)
+				ctx.addIssue({
+					code: 'custom',
+					path: ['values', index, 'kind'],
+					message: 'Cheques y e-cheq van sólo en pesos.'
+				})
+		})
 		input.values.forEach((value, index) => {
 			if (
 				value.kind === 'cash' &&
@@ -281,6 +326,37 @@ export const bffPaymentOrderDetailResponseSchema = z.object({
 export const bffPayablesResponseSchema = z.object({
 	payables: z.array(supplierPayableSchema)
 })
+/**
+ * POST /api/payment-orders/withholdings — lo que se le retendría al
+ * proveedor en una orden con esas facturas (con sus datos impositivos de
+ * contacts y lo ya pagado en el mes), para mostrarlo antes de registrar.
+ */
+export const bffWithholdingsPreviewBodySchema = z
+	.object({
+		supplierId: z.uuid(),
+		date: isoDateSchema,
+		applications: z.array(applicationSchema).max(200),
+		withholdingExempt: z.array(withholdingTaxSchema).max(4).default([]),
+		...currencyFields
+	})
+	.superRefine(refineCurrency)
+export const bffWithholdingsPreviewResponseSchema = z.object({
+	withholdings: z.array(withholdingDraftSchema)
+})
+
+/**
+ * POST /api/receipts/:id/mail · POST /api/payment-orders/:id/mail (204) —
+ * manda el PDF al cliente («E-mail Facturación» o el del contacto) o al
+ * proveedor (el de pagos o el del contacto), con su plantilla. `to` cambia
+ * el destino. Sin mail, `treasury.no_email`. El PDF se baja con
+ * GET /api/receipts/:id/pdf, GET /api/payment-orders/:id/pdf y
+ * GET /api/payment-orders/:id/certificates/pdf (los certificados de
+ * retención; `treasury.no_withholdings` si no tiene).
+ */
+export const bffTreasuryMailBodySchema = z.object({
+	to: z.email().optional()
+})
+
 /** POST /api/payment-orders/delivered */
 export const bffSetDeliveredBodySchema = z.object({
 	ids: z.array(z.uuid()).min(1).max(500),
