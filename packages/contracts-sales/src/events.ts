@@ -77,7 +77,20 @@ export const invoiceEventSchema = z.object({
 	})
 })
 
-/** `sales.delivery_note.created.v1` (a mano) · `sales.delivery_note.voided.v1` */
+/**
+ * Lo que salió (o volvió) de cada artículo, en su unidad de stock:
+ * presentaciones × unidades por presentación. Lo consume stock.
+ */
+export const stockLineSchema = z.object({
+	articleId: z.string(),
+	quantity: z.number().positive()
+})
+
+/**
+ * `sales.delivery_note.created.v1` (Expedición y a mano) ·
+ * `sales.delivery_note.voided.v1`. Las líneas y la fecha llegaron en 0.6.0:
+ * los eventos viejos vienen sin ellas.
+ */
 export const deliveryNoteEventSchema = z.object({
 	deliveryNote: z.object({
 		id: salesIdSchema,
@@ -85,11 +98,13 @@ export const deliveryNoteEventSchema = z.object({
 		orderId: salesIdSchema,
 		customerId: z.uuid(),
 		localId: z.string().nullable(),
-		status: z.enum(['to_invoice', 'invoiced', 'cancelled'])
+		status: z.enum(['to_invoice', 'invoiced', 'cancelled']),
+		date: z.string().optional(),
+		lines: z.array(stockLineSchema).default([])
 	})
 })
 
-/** `sales.return.created.v1` — sin líneas: las notas de crédito salen aparte. */
+/** `sales.return.created.v1` — las notas de crédito salen aparte. */
 export const returnEventSchema = z.object({
 	return: z.object({
 		id: salesIdSchema,
@@ -99,6 +114,10 @@ export const returnEventSchema = z.object({
 		localId: z.string().nullable(),
 		reason: z.string(),
 		destination: z.string(),
-		creditNoteIds: z.array(salesIdSchema)
+		creditNoteIds: z.array(salesIdSchema),
+		/** Desde 0.6.0: lo devuelto, en unidad de stock (lo consume stock). */
+		date: z.string().optional(),
+		deliveryNote: z.string().optional(),
+		lines: z.array(stockLineSchema).default([])
 	})
 })

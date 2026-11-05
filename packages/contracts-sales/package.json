@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-sales",
-	"version": "0.5.0",
+	"version": "0.6.0",
 	"description": "Contrato del módulo sales: pedidos, expedición (hojas de ruta y remitos), bandejas, facturas y notas de crédito con su CAE, y lo vendido.",
 	"license": "UNLICENSED",
 	"type": "module",
