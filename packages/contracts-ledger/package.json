@@ -1,0 +1,35 @@
+{
+	"name": "@henko-software/contracts-ledger",
+	"version": "0.1.0",
+	"description": "Contrato del módulo ledger: cuenta corriente de clientes y proveedores (movimientos, imputaciones, saldos, antigüedad, vencimientos) y plan de cuentas.",
+	"license": "UNLICENSED",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Henko-Software/henko-contracts.git",
+		"directory": "packages/contracts-ledger"
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com"
+	},
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"henko-source": "./src/index.ts",
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@henko-software/contracts-common": "workspace:^",
+		"@henko-software/contracts-contacts": "workspace:^",
+		"zod": "^4.1.0"
+	}
+}
