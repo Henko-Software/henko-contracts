@@ -242,11 +242,18 @@ export const transferInputSchema = z
 export type TransferInput = z.output<typeof transferInputSchema>
 /**
  * `POST /internal/transfers` — `stock.insufficient` si en el origen no hay
- * tanto. Con un `id` (de operación) que ya existe, 200 con lo que hay.
+ * tanto. Con un `id` (de operación) que ya existe, 200 con lo que hay. Con
+ * `ref` de un retiro (`recall`, desde 0.2.0) la hace producción (el
+ * orquestador): pide `production.write` en vez de `stock.write`.
  */
 export const createTransferRequestSchema = z.object({
 	id: stockIdSchema.optional(),
-	transfer: transferInputSchema
+	transfer: transferInputSchema,
+	ref: movementRefSchema
+		.refine(ref => ref.kind === 'recall', {
+			message: 'Sólo un retiro mueve con comprobante.'
+		})
+		.optional()
 })
 
 /** Sumar o restar en una ubicación, con motivo. */

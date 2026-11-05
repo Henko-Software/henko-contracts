@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-stock",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Contrato del módulo stock: ubicaciones, existencias por artículo, ubicación y lote, movimientos, transferencias, ajustes, conteos y consumo y alta de lotes de producción.",
 	"license": "UNLICENSED",
 	"type": "module",

@@ -82,3 +82,27 @@ describe('contrato de stock', () => {
 		expect(query.limit).toBe(1000)
 	})
 })
+
+describe('transferencia de un retiro', () => {
+	it('sólo acepta `ref` de un retiro', async () => {
+		const { createTransferRequestSchema } = await import('./index.js')
+		const transfer = {
+			articleId: 'empanada',
+			lot: '05-11-26',
+			fromId: 'ub-n-cong',
+			toId: 'ub-ret',
+			quantity: 10,
+			note: null
+		}
+		const ref = { kind: 'recall', id: 'r-1', number: '0001' }
+		expect(
+			createTransferRequestSchema.safeParse({ transfer, ref }).success
+		).toBe(true)
+		expect(
+			createTransferRequestSchema.safeParse({
+				transfer,
+				ref: { ...ref, kind: 'count' }
+			}).success
+		).toBe(false)
+	})
+})
