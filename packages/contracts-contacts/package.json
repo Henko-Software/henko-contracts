@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-contacts",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Contrato del módulo contacts: contactos con roles (clientes, proveedores, transportistas, vendedores), condiciones de pago y tablas auxiliares.",
 	"license": "UNLICENSED",
 	"type": "module",
@@ -28,6 +28,7 @@
 		"typecheck": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
+		"@henko-software/contracts-common": "workspace:^",
 		"zod": "^4.1.0"
 	}
 }

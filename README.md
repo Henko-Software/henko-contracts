@@ -6,6 +6,7 @@ depende sólo de los contratos que usa.
 
 | Paquete                                  | Qué define                                                                                                                                                                      |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@henko-software/contracts-common`       | piezas que comparten los contratos: `listParam` y `booleanParam` para los filtros de los listados en la query                                                                   |
 | `@henko-software/contracts-identity`     | API interna de `identity` (sesiones con «ver como», usuarios, dispositivos, organización de la instancia, flags guardados), roles, errores y eventos                            |
 | `@henko-software/contracts-flags`        | catálogo de feature flags (las claves copian la nav), valores guardados y efectivos, y el nodo del panel                                                                        |
 | `@henko-software/contracts-bff`          | API pública de `henko-bff`, la que usa `henko-web` (sesión, flags, Administración armada con contacts, padrón de ARCA con fiscal)                                               |
