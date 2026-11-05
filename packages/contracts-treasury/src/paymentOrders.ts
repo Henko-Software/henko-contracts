@@ -6,6 +6,7 @@ import {
 	booleanParam,
 	chequeNumberSchema,
 	contactIdSchema,
+	currencyFields,
 	documentNumberSchema,
 	historyEntrySchema,
 	idsSchema,
@@ -13,9 +14,15 @@ import {
 	listParam,
 	openItemRefSchema,
 	positiveCentsSchema,
+	refineCurrency,
 	treasuryIdSchema,
 	voidedSchema
 } from './common.js'
+import {
+	appliedWithholdingSchema,
+	supplierTaxSchema,
+	withholdingTaxSchema
+} from './withholdings.js'
 
 /**
  * Órdenes de pago a proveedores (Aires: Tesorería › Pagos): qué facturas
@@ -76,14 +83,26 @@ export const paymentValueSchema = z
 	})
 export type PaymentValue = z.infer<typeof paymentValueSchema>
 
+/** Lo que sólo se paga en pesos: cheques endosados y e-cheq propios. */
+export const PESO_ONLY_PAYMENT_KINDS: readonly PaymentValue['kind'][] = [
+	'endorsed',
+	'echeq'
+]
+
 export const paymentOrderSchema = z.object({
 	id: treasuryIdSchema,
 	number: documentNumberSchema,
 	supplierId: contactIdSchema,
 	date: isoDateSchema,
+	/** Lo aplicado a cada factura, en pesos. */
 	applications: z.array(applicationSchema),
+	/** Los medios, en la moneda de la orden. */
 	values: z.array(paymentValueSchema).min(1),
+	/** Lo que se le retuvo (en pesos), con su certificado. */
+	withholdings: z.array(appliedWithholdingSchema).default([]),
+	...currencyFields,
 	notes: z.string().max(500).nullable(),
+	/** En pesos: medios por la cotización más retenciones (lo que va a la cuenta corriente). */
 	total: positiveCentsSchema,
 	delivered: z.boolean(),
 	deliveredAt: isoDateSchema.nullable(),
@@ -93,35 +112,50 @@ export const paymentOrderSchema = z.object({
 })
 export type PaymentOrder = z.infer<typeof paymentOrderSchema>
 
-const sumOf = (rows: { amount: number }[]) =>
-	rows.reduce((total, row) => total + row.amount, 0)
-
 /**
  * `POST /internal/payment-orders`. Con un `id` que ya existe no duplica.
  * `supplier` y `openItems` los trae el BFF; un cheque endosado tiene que
  * estar en la cartera (`treasury.cheque_not_available`) y su monto es el del
- * cheque.
+ * cheque. Si Big Pizza es agente de retención (config de treasury), treasury
+ * calcula las retenciones con los datos impositivos del proveedor; lo que se
+ * paga más lo retenido tiene que alcanzar para lo aplicado
+ * (`treasury.payment_values_short`). En dólares, sólo transferencias (de
+ * una cuenta en dólares) y efectivo.
  */
 export const createPaymentOrderRequestSchema = z
 	.object({
 		id: treasuryIdSchema.optional(),
 		supplier: z.object({
 			id: contactIdSchema,
-			label: z.string().max(200)
+			label: z.string().max(200),
+			tax: supplierTaxSchema.default({
+				vatCondition: null,
+				incomeTaxWithholding: null,
+				incomeTaxConcept: null
+			})
 		}),
 		date: isoDateSchema,
 		applications: z.array(applicationSchema).max(200),
 		values: z.array(paymentValueSchema).min(1).max(50),
+		/** Impuestos que no se le retienen (certificado de exclusión). */
+		withholdingExempt: z.array(withholdingTaxSchema).max(4).default([]),
+		...currencyFields,
 		notes: z.string().trim().max(500).nullable(),
 		openItems: z.array(openItemRefSchema).max(2000)
 	})
 	.superRefine((input, ctx) => {
-		if (sumOf(input.values) < sumOf(input.applications))
-			ctx.addIssue({
-				code: 'custom',
-				path: ['values'],
-				message: 'Lo que se paga no alcanza para lo que se aplica.'
-			})
+		refineCurrency(input, ctx)
+		input.values.forEach((value, index) => {
+			if (
+				input.currency !== 'ARS' &&
+				PESO_ONLY_PAYMENT_KINDS.includes(value.kind)
+			)
+				ctx.addIssue({
+					code: 'custom',
+					path: ['values', index, 'kind'],
+					message: 'Cheques y e-cheq van sólo en pesos.'
+				})
+		})
 		const cheques = input.values.flatMap(row =>
 			row.chequeId ? [row.chequeId] : []
 		)

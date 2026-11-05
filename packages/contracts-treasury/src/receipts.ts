@@ -5,12 +5,15 @@ import {
 	applicationSchema,
 	chequeNumberSchema,
 	contactIdSchema,
+	currencyFields,
 	documentNumberSchema,
 	historyEntrySchema,
 	isoDateSchema,
 	listParam,
 	openItemRefSchema,
 	positiveCentsSchema,
+	refineCurrency,
+	toPesos,
 	treasuryIdSchema,
 	voidedSchema
 } from './common.js'
@@ -37,6 +40,12 @@ export const DEPOSITED_KINDS: readonly ReceiptValueKind[] = [
 ]
 /** Los que van a la cartera de cheques. */
 export const CHEQUE_KINDS: readonly ReceiptValueKind[] = ['echeq', 'cheque']
+/** Lo que sólo entra en pesos: cheques, e-cheq y Mercado Pago. */
+export const PESO_ONLY_RECEIPT_KINDS: readonly ReceiptValueKind[] = [
+	'echeq',
+	'cheque',
+	'mercadopago'
+]
 
 export const receiptChequeSchema = z.object({
 	bank: z.string().trim().min(1).max(60),
@@ -101,11 +110,15 @@ export const receiptSchema = z.object({
 	/** El local del cliente al registrar (alcance); `null` = casa central. */
 	localId: z.string().nullable(),
 	date: isoDateSchema,
+	/** Los medios, en la moneda del recibo. */
 	values: z.array(receiptValueSchema).min(1),
+	/** Lo que retuvo el cliente, en pesos. */
 	withholdings: z.array(withholdingSchema),
+	/** Lo aplicado a cada factura, en pesos. */
 	applications: z.array(applicationSchema),
+	...currencyFields,
 	notes: z.string().max(500).nullable(),
-	/** Medios más retenciones. */
+	/** En pesos: medios por la cotización más retenciones. */
 	total: positiveCentsSchema,
 	/** Lo que quedó a favor del cliente. */
 	onAccount: z.number().int().min(0),
@@ -123,7 +136,9 @@ const sumOf = (rows: { amount: number }[]) =>
  * `POST /internal/receipts`. Con un `id` que ya existe no duplica: 200 con
  * el que hay. `customer` y `openItems` los trae el BFF (de contacts y de
  * ledger): treasury controla que cada factura todavía deba lo que se le
- * aplica (si no, `treasury.receipt_application_exceeds`).
+ * aplica (si no, `treasury.receipt_application_exceeds`). En dólares, los
+ * medios van en dólares (transferencia a una cuenta en dólares o efectivo)
+ * y lo aplicado en pesos, con la cotización del recibo.
  */
 export const createReceiptRequestSchema = z
 	.object({
@@ -138,13 +153,27 @@ export const createReceiptRequestSchema = z
 		values: z.array(receiptValueInputSchema).min(1).max(50),
 		withholdings: z.array(withholdingSchema).max(20),
 		applications: z.array(applicationSchema).max(200),
+		...currencyFields,
 		notes: z.string().trim().max(500).nullable(),
 		openItems: z.array(openItemRefSchema).max(2000)
 	})
 	.superRefine((input, ctx) => {
+		refineCurrency(input, ctx)
+		input.values.forEach((value, index) => {
+			if (
+				input.currency !== 'ARS' &&
+				PESO_ONLY_RECEIPT_KINDS.includes(value.kind)
+			)
+				ctx.addIssue({
+					code: 'custom',
+					path: ['values', index, 'kind'],
+					message: 'Cheques, e-cheq y Mercado Pago van sólo en pesos.'
+				})
+		})
 		if (
 			sumOf(input.applications) >
-			sumOf(input.values) + sumOf(input.withholdings)
+			toPesos(sumOf(input.values), input.exchangeRate) +
+				sumOf(input.withholdings)
 		)
 			ctx.addIssue({
 				code: 'custom',

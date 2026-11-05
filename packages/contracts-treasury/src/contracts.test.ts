@@ -89,6 +89,62 @@ describe('contrato de treasury', () => {
 		).toBe(false)
 	})
 
+	it('en dólares: cotización, sin cheques y lo aplicado en pesos', () => {
+		const usd = {
+			...receipt,
+			currency: 'USD',
+			exchangeRate: 1000,
+			values: [{ kind: 'cash', amount: 2, bankAccountId: null, cheque: null }],
+			applications: [
+				{ movementId: OTHER, number: '0002-00000001', amount: 2000 }
+			]
+		}
+		expect(createReceiptRequestSchema.safeParse(usd).success).toBe(true)
+		expect(
+			createReceiptRequestSchema.safeParse({
+				...usd,
+				applications: [{ ...usd.applications[0], amount: 2001 }]
+			}).success
+		).toBe(false)
+		expect(
+			createReceiptRequestSchema.safeParse({ ...usd, values: receipt.values })
+				.success
+		).toBe(false)
+		expect(
+			createReceiptRequestSchema.safeParse({ ...receipt, exchangeRate: 2 })
+				.success
+		).toBe(false)
+		expect(createReceiptRequestSchema.parse(receipt)).toMatchObject({
+			currency: 'ARS',
+			exchangeRate: 1
+		})
+	})
+
+	it('la orden de pago trae los impuestos del proveedor o nada', () => {
+		const parsed = createPaymentOrderRequestSchema.parse({
+			supplier: { id: ID, label: 'Molino' },
+			date: '2026-11-05',
+			applications: [],
+			values: [
+				{
+					kind: 'transfer',
+					amount: 10,
+					bankAccountId: ID,
+					chequeId: null,
+					echeq: null
+				}
+			],
+			notes: null,
+			openItems: []
+		})
+		expect(parsed.supplier.tax).toEqual({
+			vatCondition: null,
+			incomeTaxWithholding: null,
+			incomeTaxConcept: null
+		})
+		expect(parsed.withholdingExempt).toEqual([])
+	})
+
 	it('el CBU tiene que tener los verificadores bien', () => {
 		expect(isValidCbu('0110599520000001235579')).toBe(true)
 		expect(isValidCbu('0110599520000001235578')).toBe(false)

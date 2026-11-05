@@ -36,6 +36,36 @@ export const CURRENCIES = ['ARS', 'USD'] as const
 export const currencySchema = z.enum(CURRENCIES)
 export type Currency = z.infer<typeof currencySchema>
 
+/** Pesos por unidad de la moneda del comprobante (1 en pesos). */
+export const exchangeRateSchema = z.number().positive().max(1_000_000)
+
+/**
+ * Moneda y cotización de un recibo u orden de pago. Los medios van en esa
+ * moneda; las retenciones y lo que se aplica a cada factura, en pesos (como
+ * la cuenta corriente). Sin moneda, en pesos.
+ */
+export const currencyFields = {
+	currency: currencySchema.default('ARS'),
+	exchangeRate: exchangeRateSchema.default(1)
+}
+
+/** En pesos, la cotización es 1. */
+export const refineCurrency = (
+	input: { currency: Currency; exchangeRate: number },
+	ctx: z.RefinementCtx
+) => {
+	if (input.currency === 'ARS' && input.exchangeRate !== 1)
+		ctx.addIssue({
+			code: 'custom',
+			path: ['exchangeRate'],
+			message: 'En pesos, la cotización es 1.'
+		})
+}
+
+/** Un importe en la moneda del comprobante, en centavos de pesos. */
+export const toPesos = (amount: number, exchangeRate: number) =>
+	Math.round(amount * exchangeRate)
+
 /**
  * Quién hizo algo. Si lo hizo un superadmin y quien mira no lo es, viene
  * `hidden: true` y sin id ni rol: el dato queda, lo que se esconde es quién.

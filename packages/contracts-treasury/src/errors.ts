@@ -22,6 +22,14 @@ export const TREASURY_ERRORS = [
 	'treasury.bank_account_cbu_taken',
 	/** Anular algo ya anulado, o con cheques que ya no están donde estaban. */
 	'treasury.not_voidable',
+	/** Lo que se paga más lo retenido no alcanza para lo aplicado. */
+	'treasury.payment_values_short',
+	/** Certificados de una orden sin retenciones. */
+	'treasury.no_withholdings',
+	/** Mandar por mail a quien no tiene mail. */
+	'treasury.no_email',
+	/** El servidor de mail no lo tomó. */
+	'treasury.mail_failed',
 	/** Escribir sobre una versión vieja del registro. */
 	'treasury.version_conflict'
 ] as const

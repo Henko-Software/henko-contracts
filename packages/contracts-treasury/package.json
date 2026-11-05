@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-treasury",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Contrato del módulo treasury: recibos, órdenes de pago, cheques, cuentas bancarias, extractos y caja proyectada.",
 	"license": "UNLICENSED",
 	"type": "module",
