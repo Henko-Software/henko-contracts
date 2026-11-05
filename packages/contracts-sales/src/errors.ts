@@ -30,6 +30,8 @@ export const SALES_ERRORS = [
 	'sales.no_billing_email',
 	/** No se pudo mandar el mail (el servidor de correo no respondió). */
 	'sales.mail_failed',
+	/** Encolar el mail de un comprobante que todavía no tiene CAE (o fue rechazado). */
+	'sales.invoice_not_authorized',
 	'sales.return_not_found',
 	/** Devolver más de lo que se puede de una línea, o una línea repetida (H-DV002). */
 	'sales.return_exceeded'

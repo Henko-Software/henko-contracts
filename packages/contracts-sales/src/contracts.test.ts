@@ -5,6 +5,8 @@ import {
 	createReturnRequestSchema,
 	customerBillingSchema,
 	invoiceAuthorizationRequestedEventSchema,
+	invoiceMailRequestedEventSchema,
+	invoiceOrdersRequestSchema,
 	listOrdersQuerySchema,
 	markSentRequestSchema,
 	orderInputSchema,
@@ -155,5 +157,25 @@ describe('contrato de sales', () => {
 				lines: [{ orderLineId: ID, quantity: 1 }]
 			}).success
 		).toBe(true)
+	})
+
+	it('facturar guarda la foto del cliente para el mail automático', () => {
+		const parsed = invoiceOrdersRequestSchema.parse({
+			orderIds: [ID],
+			date: '2026-11-05',
+			customers: [
+				{
+					customerId: ID,
+					receiver: { vatCondition: 'RI', docType: 'CUIT', docNumber: '1' },
+					priceListId: 'l',
+					paymentTermDays: 0
+				}
+			]
+		})
+		expect(parsed.parties).toEqual([])
+		expect(parsed.articleNames).toEqual({})
+		expect(
+			invoiceMailRequestedEventSchema.parse({ invoiceId: ID }).attempt
+		).toBe(1)
 	})
 })

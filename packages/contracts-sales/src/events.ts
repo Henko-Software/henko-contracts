@@ -18,6 +18,7 @@ export const SALES_EVENTS = {
 	invoiceAuthorizationRequested: 'sales.invoice.authorization_requested.v1',
 	invoiceAuthorized: 'sales.invoice.authorized.v1',
 	invoiceRejected: 'sales.invoice.rejected.v1',
+	invoiceMailRequested: 'sales.invoice.mail_requested.v1',
 	documentIssued: 'sales.document.issued.v1',
 	documentVoided: 'sales.document.voided.v1',
 	deliveryNoteCreated: 'sales.delivery_note.created.v1',
@@ -76,6 +77,21 @@ export const invoiceEventSchema = z.object({
 		authorization: z.enum(['pending', 'authorized', 'contingency', 'rejected'])
 	})
 })
+
+/**
+ * `sales.invoice.mail_requested.v1` — la cola del mail automático: sale por
+ * el outbox en la misma transacción que anota el CAE/CAEA (o al volver a
+ * encolarlo) y lo consume sales mismo (consumidor durable `sales-invoice-mail`),
+ * que arma el PDF y lo manda, con reintentos. `attempt` distingue cada
+ * encolado (el id del evento cambia).
+ */
+export const invoiceMailRequestedEventSchema = z.object({
+	invoiceId: salesIdSchema,
+	attempt: z.number().int().min(1).default(1)
+})
+export type InvoiceMailRequestedEvent = z.input<
+	typeof invoiceMailRequestedEventSchema
+>
 
 /**
  * Lo que salió (o volvió) de cada artículo, en su unidad de stock:

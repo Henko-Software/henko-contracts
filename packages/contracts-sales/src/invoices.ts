@@ -83,6 +83,42 @@ export const receiverSchema = z.object({
 	docNumber: z.string().max(20)
 })
 
+/** El cliente como sale en el papel (lo trae quien llama, de contacts). */
+export const invoicePartySchema = z.object({
+	customerId: contactIdSchema,
+	name: z.string().trim().min(1).max(200),
+	address: z.string().max(300).nullable(),
+	/** Mail de facturación: a dónde va el PDF con `channel: email`. */
+	email: z.email().nullable()
+})
+export type InvoiceParty = z.infer<typeof invoicePartySchema>
+
+/**
+ * El mail automático del comprobante (sale solo al autorizarse):
+ * - `queued`: en la cola (outbox → JetStream), se manda o se reintenta.
+ * - `sent`: mandado. `failed`: se agotaron los reintentos (se puede volver
+ *   a encolar con `POST /internal/invoices/:id/mail`).
+ * - `no_email`: el cliente no tenía mail de facturación al autorizarse.
+ */
+export const INVOICE_MAIL_STATUSES = [
+	'queued',
+	'sent',
+	'failed',
+	'no_email'
+] as const
+export const invoiceMailStatusSchema = z.enum(INVOICE_MAIL_STATUSES)
+export const invoiceMailSchema = z.object({
+	status: invoiceMailStatusSchema,
+	to: z.email().nullable(),
+	/** Intentos de envío hechos (los fallidos incluidos). */
+	attempts: z.number().int().min(0),
+	/** El último error del servidor de mail, si falló. */
+	lastError: z.string().max(500).nullable(),
+	sentAt: z.iso.datetime().nullable(),
+	updatedAt: z.iso.datetime()
+})
+export type InvoiceMail = z.infer<typeof invoiceMailSchema>
+
 export const invoiceSchema = z.object({
 	id: salesIdSchema,
 	localId: z.string().nullable(),
@@ -145,6 +181,16 @@ export const invoiceSchema = z.object({
 			at: z.iso.datetime()
 		})
 	),
+	/**
+	 * El cliente como iba en el papel al facturar (foto que manda quien
+	 * factura, de contacts): con esto sale el PDF y el mail automático sin
+	 * llamar a otro módulo. Las facturas de antes de 0.7.0 no la tienen.
+	 */
+	party: invoicePartySchema.nullable().default(null),
+	/** El nombre de cada artículo al facturar (catalog), para el PDF del mail. */
+	articleNames: z.record(z.string(), z.string().max(200)).default({}),
+	/** El mail automático (desde 0.7.0; `null` = todavía no autorizada o vieja). */
+	mail: invoiceMailSchema.nullable().default(null),
 	status: invoiceStatusSchema,
 	version: z.number().int().min(1),
 	createdAt: z.iso.datetime(),
@@ -238,7 +284,14 @@ export const invoiceOrdersRequestSchema = z.object({
 	date: isoDateSchema,
 	customers: z.array(customerBillingSchema).min(1).max(200),
 	/** El rubro de cada artículo (catalog, `category`), por id de artículo. */
-	articleCategories: z.record(z.string(), z.string().max(60)).default({})
+	articleCategories: z.record(z.string(), z.string().max(60)).default({}),
+	/**
+	 * Cada cliente como va en el papel y su mail de facturación (contacts):
+	 * queda guardado en la factura y con eso sale el mail al autorizarse.
+	 */
+	parties: z.array(invoicePartySchema).max(200).default([]),
+	/** El nombre de cada artículo por id (catalog), para el PDF del mail. */
+	articleNames: z.record(z.string(), z.string().max(200)).default({})
 })
 export type InvoiceOrdersRequest = z.input<typeof invoiceOrdersRequestSchema>
 
@@ -253,16 +306,6 @@ export const creditNoteRequestSchema = z.object({
 	date: isoDateSchema.optional()
 })
 export type CreditNoteRequest = z.input<typeof creditNoteRequestSchema>
-
-/** El cliente como sale en el papel (lo trae quien llama, de contacts). */
-export const invoicePartySchema = z.object({
-	customerId: contactIdSchema,
-	name: z.string().trim().min(1).max(200),
-	address: z.string().max(300).nullable(),
-	/** Mail de facturación: a dónde va el PDF con `channel: email`. */
-	email: z.email().nullable()
-})
-export type InvoiceParty = z.infer<typeof invoicePartySchema>
 
 /**
  * POST /internal/invoices/sent — 204. Con `email`, sales manda el PDF al
@@ -285,6 +328,18 @@ export const invoicePdfRequestSchema = z.object({
 	party: invoicePartySchema,
 	/** El nombre de cada artículo por id (catalog); si falta, sale el id. */
 	articles: z.record(z.string(), z.string().max(200)).default({})
+})
+
+/**
+ * POST /internal/invoices/:id/mail — vuelve a encolar el mail automático
+ * (después de `failed` o para mandarlo de nuevo) → `invoiceResponseSchema`.
+ * Con `party`, actualiza la foto del cliente (p. ej. un mail corregido).
+ * Sólo comprobantes autorizados: si no, `sales.invoice_not_authorized`;
+ * sin mail, `sales.no_billing_email`.
+ */
+export const requeueMailRequestSchema = z.object({
+	party: invoicePartySchema.optional(),
+	articleNames: z.record(z.string(), z.string().max(200)).optional()
 })
 
 /**

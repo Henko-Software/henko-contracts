@@ -70,8 +70,20 @@ export const returnSchema = z.object({
 	destination: returnDestinationSchema,
 	bonusPct: z.number().min(0).max(100),
 	lines: z.array(returnLineSchema).min(1),
-	/** Respaldo de rotura o cadena de frío (hoy un data URL). */
+	/**
+	 * Respaldo de rotura o cadena de frío. Desde 0.7.0 la foto se guarda en
+	 * el almacenamiento de archivos (`photo`) y acá queda `null`; sólo las
+	 * devoluciones viejas traen un data URL (o una dirección de afuera).
+	 */
 	photoUrl: z.string().max(3_000_000).nullable(),
+	/** La foto guardada (se baja con `GET /internal/returns/:id/photo`). */
+	photo: z
+		.object({
+			contentType: z.string().max(100),
+			size: z.number().int().min(0)
+		})
+		.nullable()
+		.default(null),
 	notes: z.string().max(2000).nullable(),
 	/** Las notas de crédito que generó; `number` es `null` hasta el CAE. */
 	creditNotes: z.array(
@@ -172,7 +184,18 @@ export const createReturnRequestSchema = z.object({
 		)
 		.min(1)
 		.max(500),
+	/**
+	 * La foto como la manda el celular (`data:image/…;base64,…`, hasta 3 MB):
+	 * sales la guarda en el almacenamiento de archivos. Una dirección
+	 * `https://` queda tal cual.
+	 */
 	photoUrl: z.string().max(3_000_000).nullable(),
 	notes: z.string().max(2000).nullable()
 })
 export type CreateReturnRequest = z.input<typeof createReturnRequestSchema>
+
+/** GET /internal/returns/:id/photo — la foto guardada, en base64 (`sales.return_not_found` si no hay). */
+export const returnPhotoResponseSchema = z.object({
+	contentType: z.string().max(100),
+	data: z.string()
+})

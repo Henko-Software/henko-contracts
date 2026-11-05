@@ -14,11 +14,13 @@ import { historyEventSchema, listParam } from './admin/common.js'
  * Devoluciones (`/sales/returns`, flag `orders.returns`), armadas con
  * `sales`. Copian `henko-web/apps/web/src/data/returns/schema.ts`: el BFF
  * saca lo interno (local, alta) y pone nombres en el historial. El número
- * de una nota de crédito sin CAE es `null`.
+ * de una nota de crédito sin CAE es `null`. La foto guardada sale como
+ * `photoUrl: /api/returns/:id/photo` (bytes, como la foto del artículo).
  */
 export const bffReturnSchema = returnSchema.omit({
 	localId: true,
-	createdAt: true
+	createdAt: true,
+	photo: true
 })
 export type BffReturn = z.infer<typeof bffReturnSchema>
 
@@ -46,4 +48,5 @@ export const returnableBffResponseSchema = z.object({
 export const createReturnBodySchema = createReturnRequestSchema.omit({
 	id: true
 })
+// GET /api/returns/:id/photo → la foto guardada, en bytes.
 export const returnBffResponseSchema = z.object({ return: bffReturnSchema })

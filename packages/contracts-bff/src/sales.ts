@@ -354,6 +354,24 @@ export const bffInvoiceSchema = z.object({
 		})
 	),
 	status: z.enum(INVOICE_STATUSES),
+	/**
+	 * Nuevo: el mail automático, que sale solo al autorizarse (cola con
+	 * reintentos). `queued` en la cola · `sent` mandado · `failed` sin
+	 * suerte después de los reintentos (`POST /api/invoices/:id/mail` lo
+	 * vuelve a encolar) · `no_email` el cliente no tenía mail. `null`: sin
+	 * CAE todavía o de antes de la cola.
+	 */
+	mail: z
+		.object({
+			status: z.enum(['queued', 'sent', 'failed', 'no_email']),
+			to: z.string().nullable(),
+			attempts: z.number().int().min(0),
+			lastError: z.string().nullable(),
+			sentAt: z.iso.datetime().nullable(),
+			updatedAt: z.iso.datetime()
+		})
+		.nullable()
+		.optional(),
 	/** Nuevo: dónde está el pedido de CAE (`pending` = falta; se reintenta). */
 	authorization: z.object({
 		status: authorizationStatusSchema,
@@ -427,6 +445,8 @@ export const markSentBodySchema = z.object({
 	channel: z.enum(['email', 'whatsapp'])
 })
 // POST /api/invoices/:id/retry-cae → `invoiceBffResponseSchema`.
+// POST /api/invoices/:id/mail → `invoiceBffResponseSchema`: vuelve a encolar
+// el mail automático con el mail de facturación de hoy del cliente.
 // GET /api/invoices/:id/pdf → `application/pdf` (el mismo que va por mail).
 
 /** POST /api/delivery-notes — remito a mano, sin Expedición (flag `orders.deliveryNotes`). */
