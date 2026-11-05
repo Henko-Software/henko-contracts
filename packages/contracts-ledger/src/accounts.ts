@@ -276,7 +276,12 @@ export const undoApplicationRequestSchema = z.object({
 
 // ---------- Comprobantes de otros módulos (eventos y comandos)
 
-/** Qué comprobante imputa a cuál: el id del otro en su módulo y cuánto (en pesos). */
+/**
+ * Qué comprobante imputa a cuál: el id del otro en su módulo (o el id del
+ * movimiento en `ledger`, como lo eligen Tesorería y la pantalla) y cuánto
+ * (en pesos). Si al anotarlo ya no debe tanto, se imputa lo que se puede y
+ * el resto queda a cuenta: el comprobante nunca se pierde.
+ */
 export const documentApplicationSchema = z.object({
 	documentId: z.string().min(1).max(80),
 	amount: positiveCentsSchema

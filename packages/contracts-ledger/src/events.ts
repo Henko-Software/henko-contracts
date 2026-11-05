@@ -50,6 +50,23 @@ export const treasuryPaymentOrderIssuedEventSchema = z.object({
 })
 
 /**
+ * `treasury.cheque.rejected.v1` (stream `TREASURY`): el banco no pagó un
+ * cheque de un cliente: nota de débito al cliente por el monto (la deuda
+ * vuelve a abrirse; el recibo queda como estaba).
+ */
+export const treasuryChequeRejectedEventSchema = z.object({
+	document: documentOf(['debit_note'] as const)
+})
+/**
+ * `treasury.cheque.returned.v1` (stream `TREASURY`): el proveedor devolvió un
+ * cheque que se le endosó y fue rechazado: nota de débito del proveedor (lo
+ * que se le pagó con ese cheque se le vuelve a deber).
+ */
+export const treasuryChequeReturnedEventSchema = z.object({
+	document: documentOf(['debit_note'] as const)
+})
+
+/**
  * Lo que consume `ledger`, con de qué lado anota y de qué módulo viene. Los
  * `*.voided.v1` llevan `documentVoidedEventSchema`.
  */
@@ -93,6 +110,16 @@ export const LEDGER_INBOUND_EVENTS = {
 		party: 'supplier',
 		module: 'treasury',
 		schema: documentVoidedEventSchema
+	},
+	'treasury.cheque.rejected.v1': {
+		party: 'customer',
+		module: 'treasury',
+		schema: treasuryChequeRejectedEventSchema
+	},
+	'treasury.cheque.returned.v1': {
+		party: 'supplier',
+		module: 'treasury',
+		schema: treasuryChequeReturnedEventSchema
 	}
 } as const
 export type LedgerInboundEventType = keyof typeof LEDGER_INBOUND_EVENTS

@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-ledger",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Contrato del módulo ledger: cuenta corriente de clientes y proveedores (movimientos, imputaciones, saldos, antigüedad, vencimientos) y plan de cuentas.",
 	"license": "UNLICENSED",
 	"type": "module",
