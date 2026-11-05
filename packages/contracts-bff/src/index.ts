@@ -21,6 +21,7 @@ import {
 
 export * from './admin/index.js'
 export * from './sales.js'
+export * from './salesReports.js'
 
 /**
  * Contrato de la API pública de `henko-bff` (la que usa `henko-web`). La
