@@ -66,8 +66,9 @@ export const receptionEventSchema = z.object({
  * por unidad de compra). Lo consume catalog para pasar el costo del insumo
  * al último precio facturado, con historial. `.claim_resolved.v1` ·
  * `.voided.v1` llevan la misma forma. `letter`, `number`, `localId` y
- * `actor` (quién aceptó o anuló) llegaron en 0.2.0: los eventos de antes no
- * los traen.
+ * `actor` (quién aceptó o anuló) llegaron en 0.2.0; `net`, `nonTaxed` y
+ * `concept` en 0.3.0 (estado de resultados): los eventos de antes no los
+ * traen.
  */
 export const purchaseInvoiceEventSchema = z.object({
 	invoice: z.object({
@@ -79,6 +80,11 @@ export const purchaseInvoiceEventSchema = z.object({
 		localId: z.string().nullable().optional(),
 		date: z.string(),
 		total: z.number().int(),
+		/** Neto gravado y no gravado, sin IVA ni percepciones (desde 0.3.0). */
+		net: z.number().int().optional(),
+		nonTaxed: z.number().int().optional(),
+		/** Qué se compró, si no viene de un pedido (desde 0.3.0). */
+		concept: z.string().nullable().optional(),
 		actor: actorRefSchema.optional(),
 		lines: z.array(
 			z.object({

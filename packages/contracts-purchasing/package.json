@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-purchasing",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Contrato del módulo purchasing: pedidos a proveedores, recepciones y facturas de compra con su nota de crédito.",
 	"license": "UNLICENSED",
 	"type": "module",

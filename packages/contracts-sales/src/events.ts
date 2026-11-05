@@ -64,7 +64,25 @@ export type InvoiceAuthorizationRequestedEvent = z.input<
 	typeof invoiceAuthorizationRequestedEventSchema
 >
 
-/** `sales.invoice.authorized.v1` · `sales.invoice.rejected.v1` */
+/**
+ * Lo facturado de un artículo en un comprobante: unidades de stock
+ * (presentaciones × unidades por presentación) y el neto sin IVA, con el
+ * descuento de la línea y la bonificación del comprobante, en centavos.
+ */
+export const invoicedLineSchema = z.object({
+	articleId: z.string(),
+	/** El rubro del artículo al facturar (catalog); `null` si no tenía. */
+	category: z.string().nullable(),
+	units: z.number(),
+	net: z.number().int()
+})
+export type InvoicedLine = z.infer<typeof invoicedLineSchema>
+
+/**
+ * `sales.invoice.authorized.v1` · `sales.invoice.rejected.v1`. `date`, `net`
+ * y `lines` llegaron en 0.8.0 (los usa el estado de resultados de
+ * reporting): los eventos viejos vienen sin ellos.
+ */
 export const invoiceEventSchema = z.object({
 	invoice: z.object({
 		id: salesIdSchema,
@@ -74,7 +92,11 @@ export const invoiceEventSchema = z.object({
 		customerId: z.uuid(),
 		localId: z.string().nullable(),
 		total: z.number().int(),
-		authorization: z.enum(['pending', 'authorized', 'contingency', 'rejected'])
+		authorization: z.enum(['pending', 'authorized', 'contingency', 'rejected']),
+		date: z.string().optional(),
+		/** Neto sin IVA del comprobante, en centavos (siempre positivo). */
+		net: z.number().int().optional(),
+		lines: z.array(invoicedLineSchema).default([])
 	})
 })
 
