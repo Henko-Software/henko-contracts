@@ -24,6 +24,7 @@ export * from './purchasing.js'
 export * from './sales.js'
 export * from './salesReports.js'
 export * from './salesReturns.js'
+export * from './stock.js'
 export * from './treasury.js'
 
 /**
@@ -155,7 +156,9 @@ export const BFF_ERRORS = [
 	/** El BFF no tiene `PURCHASING_URL`: Compras no está configurado. */
 	'bff.purchasing_unavailable',
 	/** El BFF no tiene `TREASURY_URL`: Tesorería no está configurada. */
-	'bff.treasury_unavailable'
+	'bff.treasury_unavailable',
+	/** El BFF no tiene `STOCK_URL`: Stock no está configurado. */
+	'bff.stock_unavailable'
 ] as const
 export type BffErrorKey = (typeof BFF_ERRORS)[number]
 
