@@ -159,7 +159,9 @@ export const BFF_ERRORS = [
 	/** El BFF no tiene `TREASURY_URL`: Tesorería no está configurada. */
 	'bff.treasury_unavailable',
 	/** El BFF no tiene `STOCK_URL`: Stock no está configurado. */
-	'bff.stock_unavailable'
+	'bff.stock_unavailable',
+	/** El BFF no tiene `PRODUCTION_URL`: Producción y Trazabilidad no están configuradas. */
+	'bff.production_unavailable'
 ] as const
 export type BffErrorKey = (typeof BFF_ERRORS)[number]
 
