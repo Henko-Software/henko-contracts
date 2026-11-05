@@ -43,6 +43,40 @@ export const receptionLineSchema = z.object({
 })
 export type ReceptionLine = z.infer<typeof receptionLineSchema>
 
+/**
+ * Un renglón de lo que se carga. Sin pedido (pregunta 74), `unitPrice` es
+ * el precio por unidad de compra (centavos sin IVA) del pedido que se arma
+ * con lo que llegó; si no viene, el BFF pone el costo del catálogo. Con
+ * pedido no se usa (manda el del pedido).
+ */
+export const receptionLineInputSchema = receptionLineSchema.extend({
+	unitPrice: z.number().int().min(0).nullable().optional()
+})
+export type ReceptionLineInput = z.input<typeof receptionLineInputSchema>
+
+/** Tope de la foto del remito ya decodificada, en bytes. */
+export const RECEPTION_PHOTO_MAX_BYTES = 5 * 1024 * 1024
+
+/** Tope del `data:` URL de la foto (base64 + el prefijo). */
+export const RECEPTION_PHOTO_MAX_DATA_URL =
+	Math.ceil((RECEPTION_PHOTO_MAX_BYTES * 4) / 3) + 100
+
+/** Una dirección de afuera (≤ 2048) o la foto como `data:…;base64,…`. */
+export const receptionPhotoInputSchema = z
+	.string()
+	.max(RECEPTION_PHOTO_MAX_DATA_URL)
+	.refine(value => value.startsWith('data:') || value.length <= 2048, {
+		message: 'La dirección de la foto es demasiado larga.'
+	})
+
+/** Lo que se sabe de la foto guardada por purchasing (los bytes, por `GET …/photo`). */
+export const receptionPhotoFileSchema = z.object({
+	contentType: z.string().min(1).max(100),
+	size: z.number().int().min(1).max(RECEPTION_PHOTO_MAX_BYTES),
+	updatedAt: z.iso.datetime()
+})
+export type ReceptionPhotoFile = z.infer<typeof receptionPhotoFileSchema>
+
 /** Control del camión del proveedor (Código Alimentario, art. 154 bis). */
 export const truckCheckSchema = z.object({
 	plate: z.string().trim().min(6).max(10).nullable(),
@@ -51,29 +85,38 @@ export const truckCheckSchema = z.object({
 })
 
 const receptionFields = {
-	purchaseOrderId: purchasingIdSchema,
 	date: isoDateSchema,
 	time: z.string().regex(/^\d{2}:\d{2}$/),
 	/** Número del remito del proveedor. */
 	deliveryNote: z.string().trim().max(20).nullable(),
-	/**
-	 * Dirección de la foto del remito. Hasta que haya almacenamiento de
-	 * archivos, sólo una URL corta (no un `data:`).
-	 */
-	photo: z.string().max(2048).nullable(),
 	truck: truckCheckSchema,
-	lines: z.array(receptionLineSchema).min(1).max(300),
 	notes: z.string().trim().max(500).nullable(),
 	/** Lo que falta no va a llegar: el pedido se cierra por lo recibido. */
 	closesOrder: z.boolean().default(false)
 }
 
-/** Lo que se carga (`ReceptionInput` del front; el proveedor sale del pedido). */
+/**
+ * Lo que se carga (`ReceptionInput` del front). Con pedido, el proveedor
+ * sale del pedido. Sin pedido (`purchaseOrderId: null`, pregunta 74), va el
+ * proveedor y purchasing arma un pedido con lo que llegó, ya cerrado, así
+ * Facturas de compra tiene contra qué comparar.
+ */
 export const receptionInputSchema = z
 	.object({
 		...receptionFields,
-		/** Lo manda el front; tiene que ser el del pedido. */
-		supplierId: supplierIdSchema.optional()
+		purchaseOrderId: purchasingIdSchema.nullable(),
+		/** Con pedido, tiene que ser el del pedido; sin pedido, obligatorio. */
+		supplierId: supplierIdSchema.optional(),
+		/**
+		 * La foto del remito: el `data:` URL que arma el celular (se guarda como
+		 * archivo) o una dirección de afuera.
+		 */
+		photo: receptionPhotoInputSchema.nullable(),
+		lines: z.array(receptionLineInputSchema).min(1).max(300)
+	})
+	.refine(input => input.purchaseOrderId !== null || input.supplierId, {
+		message: 'Sin pedido, elegí el proveedor.',
+		path: ['supplierId']
 	})
 	.refine(
 		input => input.lines.some(line => line.accepted + line.rejected > 0),
@@ -90,8 +133,17 @@ export const receptionSchema = z.object({
 	id: purchasingIdSchema,
 	number: sixDigitsSchema,
 	localId: z.string().nullable(),
+	/** El pedido; sin pedido, el que se armó con lo que llegó. */
+	purchaseOrderId: purchasingIdSchema,
 	supplierId: supplierIdSchema,
 	...receptionFields,
+	/** Dirección de afuera; `null` si no hay o si está guardada (`photoFile`). */
+	photo: z.string().max(2048).nullable(),
+	/** La foto guardada por purchasing (`GET /internal/receptions/:id/photo`). */
+	photoFile: receptionPhotoFileSchema.nullable(),
+	lines: z.array(receptionLineSchema).min(1).max(300),
+	/** Se recibió sin pedido: el pedido se armó con lo que llegó. */
+	withoutOrder: z.boolean(),
 	closesOrder: z.boolean(),
 	receivedBy: actorRefSchema,
 	/** Anulada (lo aceptado se le restó al pedido). */
@@ -124,6 +176,12 @@ export const receptionResponseSchema = z.object({ reception: receptionSchema })
 export const receptionDetailResponseSchema = z.object({
 	reception: receptionSchema,
 	history: z.array(historyEntrySchema)
+})
+
+/** GET /internal/receptions/:id/photo — la foto guardada, en base64. */
+export const receptionPhotoResponseSchema = z.object({
+	contentType: z.string(),
+	data: z.string()
 })
 
 /**

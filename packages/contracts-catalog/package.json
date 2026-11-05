@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-catalog",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Contrato del módulo catalog: artículos, agrupamientos, listas de precios, precios con vigencia e historial, bonificaciones por escala y el precio que rige para una venta.",
 	"license": "UNLICENSED",
 	"type": "module",

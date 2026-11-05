@@ -1,6 +1,10 @@
 import { z } from 'zod'
 
-import { articleIdSchema, purchasingIdSchema } from './common.js'
+import {
+	actorRefSchema,
+	articleIdSchema,
+	purchasingIdSchema
+} from './common.js'
 
 /**
  * Eventos de purchasing (stream `PURCHASES`, por el outbox, con el id en
@@ -58,17 +62,24 @@ export const receptionEventSchema = z.object({
 })
 
 /**
- * `purchases.invoice.accepted.v1`: el precio facturado de cada insumo. Lo
- * puede consumir catalog para pasar el costo a mano al precio facturado.
- * `.claim_resolved.v1` · `.voided.v1` llevan la misma forma.
+ * `purchases.invoice.accepted.v1`: el precio facturado de cada insumo (neto,
+ * por unidad de compra). Lo consume catalog para pasar el costo del insumo
+ * al último precio facturado, con historial. `.claim_resolved.v1` ·
+ * `.voided.v1` llevan la misma forma. `letter`, `number`, `localId` y
+ * `actor` (quién aceptó o anuló) llegaron en 0.2.0: los eventos de antes no
+ * los traen.
  */
 export const purchaseInvoiceEventSchema = z.object({
 	invoice: z.object({
 		id: purchasingIdSchema,
 		supplierId: z.uuid(),
 		purchaseOrderId: purchasingIdSchema.nullable(),
+		letter: z.string().optional(),
+		number: z.string().optional(),
+		localId: z.string().nullable().optional(),
 		date: z.string(),
 		total: z.number().int(),
+		actor: actorRefSchema.optional(),
 		lines: z.array(
 			z.object({
 				articleId: articleIdSchema,
