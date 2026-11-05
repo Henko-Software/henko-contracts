@@ -20,6 +20,7 @@ import {
 } from '@henko-software/contracts-identity'
 
 export * from './admin/index.js'
+export * from './production.js'
 export * from './purchasing.js'
 export * from './sales.js'
 export * from './salesReports.js'

@@ -1,6 +1,6 @@
 {
 	"name": "@henko-software/contracts-bff",
-	"version": "0.20.0",
+	"version": "0.21.0",
 	"description": "Contrato de la API que el front usa (henko-bff).",
 	"license": "UNLICENSED",
 	"type": "module",
@@ -33,6 +33,7 @@
 		"@henko-software/contracts-contacts": "workspace:^",
 		"@henko-software/contracts-flags": "workspace:^",
 		"@henko-software/contracts-identity": "workspace:^",
+		"@henko-software/contracts-production": "workspace:^",
 		"@henko-software/contracts-purchasing": "workspace:^",
 		"@henko-software/contracts-sales": "workspace:^",
 		"@henko-software/contracts-stock": "workspace:^",
