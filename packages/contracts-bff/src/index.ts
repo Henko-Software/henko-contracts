@@ -20,6 +20,7 @@ import {
 } from '@henko-software/contracts-identity'
 
 export * from './admin/index.js'
+export * from './sales.js'
 
 /**
  * Contrato de la API pública de `henko-bff` (la que usa `henko-web`). La
@@ -144,7 +145,9 @@ export const BFF_ERRORS = [
 	'bff.taxpayer_not_found',
 	'bff.catalog_unavailable',
 	/** No se da de baja una lista de precios que tienen clientes activos. */
-	'bff.price_list_in_use'
+	'bff.price_list_in_use',
+	/** El BFF no tiene `SALES_URL`: Ventas no está configurado. */
+	'bff.sales_unavailable'
 ] as const
 export type BffErrorKey = (typeof BFF_ERRORS)[number]
 

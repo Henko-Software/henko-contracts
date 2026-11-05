@@ -65,6 +65,9 @@ importers:
       '@henko-software/contracts-identity':
         specifier: workspace:^
         version: link:../contracts-identity
+      '@henko-software/contracts-sales':
+        specifier: workspace:^
+        version: link:../contracts-sales
       zod:
         specifier: ^4.1.0
         version: 4.6.7
@@ -140,6 +143,24 @@ importers:
 
   packages/contracts-orchestrator:
     dependencies:
+      zod:
+        specifier: ^4.1.0
+        version: 4.6.7
+
+  packages/contracts-sales:
+    dependencies:
+      '@henko-software/contracts-catalog':
+        specifier: workspace:^
+        version: link:../contracts-catalog
+      '@henko-software/contracts-common':
+        specifier: workspace:^
+        version: link:../contracts-common
+      '@henko-software/contracts-contacts':
+        specifier: workspace:^
+        version: link:../contracts-contacts
+      '@henko-software/contracts-fiscal':
+        specifier: workspace:^
+        version: link:../contracts-fiscal
       zod:
         specifier: ^4.1.0
         version: 4.6.7
