@@ -23,6 +23,7 @@ import {
 	UNASSIGNED_CARRIER_ID,
 	UNASSIGNED_SALESPERSON_ID
 } from './common.js'
+import { ledgerMovementSchemaFor } from './ledger.js'
 
 /**
  * Clientes (`/admin/customers`). Un cliente es un contacto de `contacts`
@@ -136,10 +137,9 @@ export const listCustomersResponseSchema = z.object({
 })
 
 /**
- * Un comprobante de la cuenta corriente del cliente, como
- * `AccountMovement` del front. Los saldos iniciales, ajustes y
- * contra-asientos de `ledger` llegan como nota de débito (si suman deuda) o
- * de crédito (si la bajan). `applied` es lo imputado neto.
+ * Un comprobante de la cuenta corriente del cliente (`AccountMovement` del
+ * front): el comprobante unificado de `ledger.ts`, con los tipos de un
+ * cliente y punto de venta de 4 dígitos.
  */
 export const CUSTOMER_MOVEMENT_KINDS = [
 	'invoice',
@@ -147,16 +147,10 @@ export const CUSTOMER_MOVEMENT_KINDS = [
 	'credit_note',
 	'debit_note'
 ] as const
-export const accountMovementSchema = z.object({
-	id: z.string(),
-	date: isoDateSchema,
-	kind: z.enum(CUSTOMER_MOVEMENT_KINDS),
-	number: z.string().regex(/^\d{4}-\d{8}$/),
-	dueDate: isoDateSchema.nullable(),
-	amount: z.number().int(),
-	settled: z.boolean(),
-	applied: z.number().int().min(0).optional()
-})
+export const accountMovementSchema = ledgerMovementSchemaFor(
+	CUSTOMER_MOVEMENT_KINDS,
+	z.string().regex(/^\d{4}-\d{8}$/)
+)
 export type AccountMovement = z.infer<typeof accountMovementSchema>
 
 /** GET /api/customers/:id — la ficha, con sus comprobantes del más nuevo al más viejo. */

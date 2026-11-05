@@ -111,13 +111,29 @@ describe('contrato de Administración del BFF', () => {
 				id: 'm1',
 				date: '2026-11-01',
 				kind: 'invoice',
+				letter: 'A',
 				number: '0003-00000001',
-				dueDate: null,
+				description: null,
+				dueDate: '2026-12-01',
+				installments: [
+					{ dueDate: '2026-11-15', amount: 600 },
+					{ dueDate: '2026-12-01', amount: 400 }
+				],
+				company: 'big_pizza',
+				currency: 'ARS',
+				exchangeRate: 1,
+				originalAmount: 1000,
 				amount: 1000,
+				applied: 0,
+				pending: 1000,
 				settled: false,
-				applied: 0
+				applications: []
 			}).success
 		).toBe(true)
+		// Un cliente no tiene órdenes de pago: el mismo comprobante, otros tipos.
+		expect(
+			accountMovementSchema.shape.kind.safeParse('payment_order').success
+		).toBe(false)
 		expect(
 			supplierMovementSchema.safeParse({
 				id: 'm2',
@@ -127,12 +143,15 @@ describe('contrato de Administración del BFF', () => {
 				number: '00004-00000001',
 				description: null,
 				dueDate: null,
-				company: '1',
+				installments: [],
+				company: 'big_pizza',
 				currency: 'ARS',
 				exchangeRate: 1,
 				originalAmount: -500,
 				amount: -500,
+				applied: 500,
 				pending: 0,
+				settled: true,
 				applications: []
 			}).success
 		).toBe(true)

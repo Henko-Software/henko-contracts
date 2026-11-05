@@ -23,6 +23,7 @@ import {
 	recordIdSchema,
 	statusesParam
 } from './common.js'
+import { ledgerMovementSchemaFor } from './ledger.js'
 
 /**
  * Proveedores (`/admin/suppliers`): contactos con rol `supplier`, planos
@@ -145,37 +146,18 @@ export const supplierMovementKindSchema = z.enum(SUPPLIER_MOVEMENT_KINDS)
 /** Punto de venta y número: 00004-00012845 (o 0001-00004512 en las OP). */
 const supplierDocumentNumberSchema = z.string().regex(/^\d{4,5}-\d{8}$/)
 
-/** Qué comprobante canceló a cuál (Aires: grilla «Aplicaciones»). */
-export const supplierMovementApplicationSchema = z.object({
-	id: z.string(),
-	date: isoDateSchema,
-	kind: supplierMovementKindSchema,
-	number: supplierDocumentNumberSchema,
-	amount: z.number().int().min(0)
-})
-
 /**
  * Un comprobante de la cuenta corriente con el proveedor (`SupplierMovement`
- * del front). Saldos iniciales, ajustes y contra-asientos de `ledger` llegan
- * como nota de débito o de crédito según el signo. `company` es la razón
- * social de la casa central (`1` si `ledger` no la tiene).
+ * del front): el comprobante unificado de `ledger.ts`, con los tipos de un
+ * proveedor.
  */
-export const supplierMovementSchema = z.object({
-	id: z.string(),
-	date: isoDateSchema,
-	kind: supplierMovementKindSchema,
-	letter: z.enum(['A', 'B', 'C', 'M', 'X']).nullable(),
-	number: supplierDocumentNumberSchema,
-	description: z.string().max(120).nullable(),
-	dueDate: isoDateSchema.nullable(),
-	company: z.string().min(1).max(40),
-	currency: z.enum(['ARS', 'USD']),
-	exchangeRate: z.number().positive(),
-	originalAmount: z.number().int(),
-	amount: z.number().int(),
-	pending: z.number().int().min(0),
-	applications: z.array(supplierMovementApplicationSchema)
-})
+export const supplierMovementSchema = ledgerMovementSchemaFor(
+	SUPPLIER_MOVEMENT_KINDS,
+	supplierDocumentNumberSchema
+)
+/** Qué comprobante canceló a cuál (Aires: grilla «Aplicaciones»). */
+export const supplierMovementApplicationSchema =
+	supplierMovementSchema.shape.applications.element
 export type SupplierMovement = z.infer<typeof supplierMovementSchema>
 
 /** GET /api/suppliers/:id — la ficha, con sus comprobantes del más nuevo al más viejo. */
